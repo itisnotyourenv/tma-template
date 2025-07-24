@@ -1,6 +1,7 @@
 """
 Limits from https://limits.tginfo.me/en
 """
+
 from src.domain.common.vo.integer import PositiveInteger
 from src.domain.common.vo.string import NonEmptyString
 

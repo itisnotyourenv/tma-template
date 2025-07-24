@@ -1,0 +1,23 @@
+from typing import Literal, Protocol, overload
+from src.domain.user.entity import User
+
+
+class UserRepository(Protocol):
+    @overload
+    def get_user(self, identifier: str) -> User: ...
+
+    @overload
+    def get_user(self, identifier: str, by: Literal["id"]) -> User: ...
+
+    @overload
+    def get_user(self, identifier: str, by: Literal["username"]) -> User: ...
+
+    def get_user(
+        self, identifier: str, by: Literal["id", "username"] = "id"
+    ) -> User: ...
+
+    def create_user(self, user: User) -> User: ...
+
+    def update_user(self, user: User) -> User: ...
+
+    def delete_user(self, user_id: str) -> None: ...

@@ -15,7 +15,9 @@ class NonEmptyString(BaseValueObject[str]):
     @classmethod
     def _validate_type(cls, value: str) -> None:
         if not isinstance(value, str):
-            error_msg = f"{cls.__name__} value must be a str, got {type(value).__name__!r}"
+            error_msg = (
+                f"{cls.__name__} value must be a str, got {type(value).__name__!r}"
+            )
             raise TypeError(error_msg)
 
     @classmethod

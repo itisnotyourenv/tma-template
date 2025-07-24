@@ -16,7 +16,9 @@ class UserModel(BaseORMModel):
     id: Mapped[UserId] = mapped_column(UserIdType, primary_key=True)
     first_name: Mapped[FirstName] = mapped_column(FirstNameType)
     last_name: Mapped[Optional[LastName]] = mapped_column(LastNameType, nullable=True)
-    username: Mapped[Optional[Username]] = mapped_column(UsernameType, nullable=True, unique=False)
+    username: Mapped[Optional[Username]] = mapped_column(
+        UsernameType, nullable=True, unique=False
+    )
     bio: Mapped[Optional[Bio]] = Column(BioType, nullable=True)
 
     def to_domain(self) -> User:

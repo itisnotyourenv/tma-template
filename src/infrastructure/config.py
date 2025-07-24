@@ -24,7 +24,6 @@ class PostgresConfig(BaseModel):
         return v
 
 
-
 class Config(BaseModel):
     postgres: PostgresConfig
 
