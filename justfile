@@ -44,3 +44,6 @@ logs:
 # Status
 status:
     docker-compose ps
+
+api:
+    uvicorn src.presentation.api.app:create_app --factory --port 8080 --reload
