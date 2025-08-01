@@ -13,4 +13,5 @@ async def health_check_handler(request: Request) -> dict:
 health_router = Router(
     path="/health",
     route_handlers=[health_check_handler],
+    tags=["health"],
 )
