@@ -19,7 +19,7 @@ class UserModel(BaseORMModel):
     username: Mapped[Optional[Username]] = mapped_column(
         UsernameType, nullable=True, unique=False
     )
-    bio: Mapped[Optional[Bio]] = Column(BioType, nullable=True)
+    bio: Mapped[Bio | None] = mapped_column(BioType, nullable=True)
 
     def to_domain(self) -> User:
         return User(

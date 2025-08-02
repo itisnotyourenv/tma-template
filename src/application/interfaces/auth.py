@@ -12,7 +12,7 @@ class InitDataDTO:
     is_premium: bool
     start_param: str | None
     photo_url: str
-    ui_language_code: str
+    ui_language_code: str | None
 
 
 class AuthService(Protocol):

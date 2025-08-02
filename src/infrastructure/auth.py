@@ -34,7 +34,7 @@ class AuthServiceImpl(AuthService):
             is_premium=parsed_data.user.is_premium or False,
             start_param=parsed_data.start_param,
             photo_url=parsed_data.user.photo_url,
-            ui_language_code=parsed_data.user.language_code,
+            ui_language_code=parsed_data.user.language_code if parsed_data.user.language_code else None,
         )
 
     def create_access_token(self, user_id: int) -> str:
