@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import AsyncGenerator
+from typing import AsyncGenerator, AsyncIterator
 
 import httpx
 import pytest
@@ -7,9 +7,16 @@ from dishka import AsyncContainer, Provider, Scope, make_async_container
 from dishka.integrations.litestar import setup_dishka
 from httpx import AsyncClient
 from litestar import Litestar
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    AsyncEngine,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from src.domain.user.vo import UserId
 from src.infrastructure.config import Config
+from src.infrastructure.db.models.base import BaseORMModel
 from src.presentation.api.app import prepare_app
 
 
@@ -66,3 +73,39 @@ async def dishka_container_for_tests(
     )
     yield container
     await container.close()
+
+
+@pytest.fixture(scope="session")
+async def sqlalchemy_engine(test_config: Config) -> AsyncGenerator[AsyncEngine, None]:
+    engine = create_async_engine(test_config.postgres.url, echo=False)
+    yield engine
+    await engine.dispose(close=True)
+
+async def clear_db(sqlalchemy_engine: AsyncEngine) -> None:
+    async with sqlalchemy_engine.begin() as conn:
+        await conn.run_sync(BaseORMModel.metadata.drop_all)
+        await conn.run_sync(BaseORMModel.metadata.create_all)
+
+
+@pytest.fixture(scope="function")
+async def db_session(
+    dishka_container_for_tests: AsyncContainer,
+) -> AsyncGenerator[AsyncSession, None]:
+    async with dishka_container_for_tests() as container:
+        session = await container.get(AsyncSession)
+        yield session
+
+
+@pytest.fixture(scope="session")
+async def async_session_maker(sqlalchemy_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(sqlalchemy_engine, expire_on_commit=False)
+
+
+@pytest.fixture(scope="function")
+async def native_db_session(
+    sqlalchemy_engine: AsyncEngine,
+    async_session_maker: async_sessionmaker[AsyncSession],
+) -> AsyncIterator[AsyncSession]:
+    await clear_db(sqlalchemy_engine)
+    async with async_session_maker() as session:
+        yield session

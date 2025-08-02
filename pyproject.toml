@@ -9,6 +9,7 @@ dependencies = [
     "alembic>=1.16.2",
     "asyncpg>=0.30.0",
     "dishka>=1.6.0",
+    "factory-boy>=3.3.3",
     "greenlet>=3.2.3",
     "litestar>=2.16.0",
     "pydantic>=2.11.7",

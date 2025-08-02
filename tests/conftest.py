@@ -7,3 +7,9 @@ from src.infrastructure.config import Config, load_config
 def test_config() -> Config:
     config = load_config("config-test.yaml")
     return config
+
+
+
+pytest_plugins = [
+    "tests.utils.model_factories.user",
+]
