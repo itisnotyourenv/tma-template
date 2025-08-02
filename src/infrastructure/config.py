@@ -29,10 +29,14 @@ class AuthConfig(BaseModel):
     algorithm: str
     access_token_expire_minutes: int
 
+class TelegramConfig(BaseModel):
+    bot_token: str
+
 
 class Config(BaseModel):
     postgres: PostgresConfig
     auth: AuthConfig
+    telegram: TelegramConfig
 
 
 def load_config(file_name: str = "config.yaml") -> Config:

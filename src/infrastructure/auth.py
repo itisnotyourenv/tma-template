@@ -17,12 +17,12 @@ class AuthServiceImpl(AuthService):
         try:
             parsed_data = safe_parse_webapp_init_data(self.config.telegram.bot_token, init_data)
         except ValueError as e:
-            error_msg = f"Invalid init data {init_data}"
-            raise ValidationError(error_msg)
+            error_msg = f"Invalid init data '{init_data}'"
+            raise ValidationError(message=error_msg)
 
         if parsed_data.user is None or parsed_data.user.photo_url is None:
-            error_msg = f"Invalid init data {init_data}"
-            raise ValidationError(error_msg)
+            error_msg = f"Invalid init data '{init_data}'"
+            raise ValidationError(message=error_msg)
 
         return InitDataDTO(
             user_id=parsed_data.user.id,

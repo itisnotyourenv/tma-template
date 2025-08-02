@@ -9,3 +9,5 @@ wheels/
 # Virtual environments
 .venv
 .idea
+config.yaml
+todos.txt

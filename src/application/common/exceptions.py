@@ -15,4 +15,5 @@ class ApplicationError(Exception):
 
 @dataclass
 class ValidationError(ApplicationError):
-    status_code: HTTPStatus = HTTPStatus.BAD_REQUEST
+    status_code: HTTPStatus = 400
+    message: str = "something went wrong"
