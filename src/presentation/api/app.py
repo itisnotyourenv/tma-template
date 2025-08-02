@@ -8,24 +8,28 @@ from src.infrastructure.di.auth import AuthProvider
 from src.infrastructure.di.interactors.auth import AuthInteractorProvider
 from src.infrastructure.di.db import DBProvider
 
-from .auth import auth_router
 from .exception import custom_exception_handler, validation_error_handler
-from .health import health_router
+from .utils import setup_routes
 
 
-def create_app() -> Litestar:
-    config = load_config()
-
+def prepare_app() -> Litestar:
+    routes = setup_routes()
     app = Litestar(
         route_handlers=[
-            auth_router,
-            health_router,
+            routes,
         ],
         exception_handlers={
             Exception: custom_exception_handler,
             ValidationError: validation_error_handler,
         },
     )
+    return app
+
+
+def create_app() -> Litestar:
+    config = load_config()
+
+    app = prepare_app()
 
     container = make_async_container(
         AuthProvider(),

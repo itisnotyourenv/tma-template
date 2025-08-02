@@ -6,7 +6,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from src.infrastructure.config import PostgresConfig, AuthConfig, Config, load_config
+from src.infrastructure.config import PostgresConfig, AuthConfig, TelegramConfig, Config, load_config
 
 
 class TestPostgresConfig:
@@ -182,6 +182,23 @@ class TestAuthConfig:
         assert config.access_token_expire_minutes == 0
 
 
+class TestTelegramConfig:
+    def test_valid_config(self):
+        config = TelegramConfig(
+            bot_token="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+        )
+        
+        assert config.bot_token == "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+
+    def test_missing_required_fields(self):
+        with pytest.raises(ValidationError):
+            TelegramConfig()
+
+    def test_empty_bot_token_allowed(self):
+        config = TelegramConfig(bot_token="")
+        assert config.bot_token == ""
+
+
 class TestConfig:
     def test_valid_config(self):
         postgres_config = PostgresConfig(
@@ -196,10 +213,14 @@ class TestConfig:
             algorithm="HS256",
             access_token_expire_minutes=30
         )
+        telegram_config = TelegramConfig(
+            bot_token="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+        )
         
-        config = Config(postgres=postgres_config, auth=auth_config)
+        config = Config(postgres=postgres_config, auth=auth_config, telegram=telegram_config)
         assert config.postgres == postgres_config
         assert config.auth == auth_config
+        assert config.telegram == telegram_config
 
     def test_missing_postgres_config(self):
         with pytest.raises(ValidationError):
@@ -225,6 +246,9 @@ class TestLoadConfig:
                 "secret_key": "test_secret_key",
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30
+            },
+            "telegram": {
+                "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
             }
         }
         
@@ -245,6 +269,7 @@ class TestLoadConfig:
             assert config.auth.secret_key == "test_secret_key"
             assert config.auth.algorithm == "HS256"
             assert config.auth.access_token_expire_minutes == 30
+            assert config.telegram.bot_token == "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
         finally:
             Path(temp_file).unlink()
 
@@ -261,6 +286,9 @@ class TestLoadConfig:
                 "secret_key": "test_secret_key",
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30
+            },
+            "telegram": {
+                "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
             }
         }
         
@@ -273,6 +301,7 @@ class TestLoadConfig:
                 assert isinstance(config, Config)
                 assert config.postgres.host == "localhost"
                 assert config.auth.secret_key == "test_secret_key"
+                assert config.telegram.bot_token == "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
 
     def test_load_config_missing_file(self):
         with pytest.raises(FileNotFoundError):
@@ -358,6 +387,9 @@ class TestLoadConfig:
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30
             },
+            "telegram": {
+                "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+            },
             "extra_config": "ignored"
         }
         
@@ -386,6 +418,9 @@ class TestLoadConfig:
                 "secret_key": "test_secret_key",
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30
+            },
+            "telegram": {
+                "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
             }
         }
         
@@ -410,6 +445,9 @@ class TestLoadConfig:
                 "secret_key": "test_secret_key",
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30
+            },
+            "telegram": {
+                "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
             }
         }
         
