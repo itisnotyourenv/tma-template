@@ -1,8 +1,6 @@
-from dataclasses import dataclass
 from http import HTTPStatus
 
 
-@dataclass
 class ApplicationError(Exception):
     status_code: HTTPStatus = HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -13,7 +11,5 @@ class ApplicationError(Exception):
         return self.message
 
 
-@dataclass
 class ValidationError(ApplicationError):
     status_code: HTTPStatus = HTTPStatus.BAD_REQUEST
-    message: str = "something went wrong"
