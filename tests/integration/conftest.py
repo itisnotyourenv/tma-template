@@ -3,7 +3,7 @@ from typing import AsyncGenerator, AsyncIterator
 
 import httpx
 import pytest
-from dishka import AsyncContainer, Provider, Scope, make_async_container
+from dishka import AsyncContainer, make_async_container
 from dishka.integrations.litestar import setup_dishka
 from httpx import AsyncClient
 from litestar import Litestar
@@ -17,6 +17,11 @@ from sqlalchemy.ext.asyncio import (
 from src.domain.user.vo import UserId
 from src.infrastructure.config import Config
 from src.infrastructure.db.models.base import BaseORMModel
+from src.infrastructure.di import (
+    interactor_providers,
+    AuthProvider,
+    DBProvider,
+)
 from src.presentation.api.app import prepare_app
 
 
@@ -65,10 +70,18 @@ def authenticated_client(create_authenticated_client) -> tuple[AsyncClient, User
 @pytest.fixture(scope="function")
 async def dishka_container_for_tests(
     test_config: Config,
+    sqlalchemy_engine: AsyncEngine,
 ) -> AsyncGenerator[AsyncContainer, None]:
-    mock_provider = Provider(scope=Scope.APP)
+    await clear_db(sqlalchemy_engine)
+
+    interactor_provider_instances = [
+        interactor() for interactor in interactor_providers
+    ]
 
     container = make_async_container(
+        AuthProvider(),
+        DBProvider(test_config.postgres),  # todo - pass config with context
+        *interactor_provider_instances,
         context={Config: test_config},
     )
     yield container
@@ -97,7 +110,7 @@ async def db_session(
 
 
 @pytest.fixture(scope="session")
-async def async_session_maker(sqlalchemy_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+def async_session_maker(sqlalchemy_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(sqlalchemy_engine, expire_on_commit=False)
 
 

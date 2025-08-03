@@ -5,9 +5,8 @@ from src.infrastructure.config import Config, load_config
 
 @pytest.fixture(scope="session")
 def test_config() -> Config:
-    config = load_config("config-test.yaml")
+    config = load_config("config-local.yaml")
     return config
-
 
 
 pytest_plugins = [

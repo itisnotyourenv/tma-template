@@ -11,3 +11,6 @@ wheels/
 .idea
 config.yaml
 todos.txt
+
+config-local.yaml
+.claude/reports

@@ -1,10 +1,9 @@
 from typing import Awaitable, Callable
 
 import pytest
+import factory
 
 from src.infrastructure.db.models import UserModel
-
-import factory
 
 from .base import BaseFactory, create_entity
 

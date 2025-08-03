@@ -3,6 +3,7 @@ from datetime import UTC, datetime, timedelta
 from aiogram.utils.web_app import safe_parse_webapp_init_data
 from jose.jwt import encode
 
+from src.application.auth.exceptions import InvalidInitDataError
 from src.application.common.exceptions import ValidationError
 from src.application.interfaces.auth import AuthService, InitDataDTO
 from src.infrastructure.config import Config
@@ -20,7 +21,7 @@ class AuthServiceImpl(AuthService):
             )
         except ValueError:
             error_msg = f"Invalid init data '{init_data}'"
-            raise ValidationError(message=error_msg)
+            raise InvalidInitDataError(message=error_msg)
 
         if parsed_data.user is None or parsed_data.user.photo_url is None:
             error_msg = f"Invalid init data '{init_data}'"
