@@ -3,21 +3,33 @@ from src.domain.user.vo import UserId, FirstName, LastName, Username, Bio
 
 
 class TestUserId:
-    def test_valid_user_id(self):
-        user_id = UserId(123)
-        assert user_id.value == 123
+    @pytest.mark.parametrize("value,expected", [
+        (1, 1),
+        (123, 123),
+        (999999, 999999),
+    ])
+    def test_valid_user_id(self, value, expected):
+        user_id = UserId(value)
+        assert user_id.value == expected
 
-    def test_invalid_type(self):
-        with pytest.raises(TypeError, match="UserId value must be an int"):
-            UserId("123")
+    @pytest.mark.parametrize("invalid_value,expected_error", [
+        ("123", "UserId value must be an int"),
+        (12.5, "UserId value must be an int"),
+        (None, "UserId value must be an int"),
+        ([], "UserId value must be an int"),
+    ])
+    def test_invalid_type(self, invalid_value, expected_error):
+        with pytest.raises(TypeError, match=expected_error):
+            UserId(invalid_value)
 
-    def test_negative_value(self):
-        with pytest.raises(ValueError, match="UserId value must be a positive integer"):
-            UserId(-1)
-
-    def test_zero_value(self):
-        with pytest.raises(ValueError, match="UserId value must be a positive integer"):
-            UserId(0)
+    @pytest.mark.parametrize("invalid_value,expected_error", [
+        (-1, "UserId value must be a positive integer"),
+        (0, "UserId value must be a positive integer"),
+        (-999, "UserId value must be a positive integer"),
+    ])
+    def test_invalid_values(self, invalid_value, expected_error):
+        with pytest.raises(ValueError, match=expected_error):
+            UserId(invalid_value)
 
     def test_equality(self):
         user_id1 = UserId(123)
@@ -43,115 +55,130 @@ class TestUserId:
 
 
 class TestFirstName:
-    def test_valid_first_name(self):
-        first_name = FirstName("John")
-        assert first_name.value == "John"
+    @pytest.mark.parametrize("value,expected", [
+        ("John", "John"),
+        ("A", "A"),
+        ("A" * 64, "A" * 64),
+        ("Jos�", "Jos�"),
+        ("Mary-Jane", "Mary-Jane"),
+    ])
+    def test_valid_first_name(self, value, expected):
+        first_name = FirstName(value)
+        assert first_name.value == expected
 
-    def test_minimum_length(self):
-        first_name = FirstName("A")
-        assert first_name.value == "A"
+    @pytest.mark.parametrize("invalid_value,expected_error", [
+        ("", "FirstName value must be between 1 and 64 characters long"),
+        ("A" * 65, "FirstName value must be between 1 and 64 characters long"),
+        ("A" * 100, "FirstName value must be between 1 and 64 characters long"),
+    ])
+    def test_invalid_length(self, invalid_value, expected_error):
+        with pytest.raises(ValueError, match=expected_error):
+            FirstName(invalid_value)
 
-    def test_maximum_length(self):
-        long_name = "A" * 64
-        first_name = FirstName(long_name)
-        assert first_name.value == long_name
-
-    def test_empty_string(self):
-        with pytest.raises(ValueError, match="FirstName value must be between 1 and 64 characters long"):
-            FirstName("")
-
-    def test_too_long(self):
-        long_name = "A" * 65
-        with pytest.raises(ValueError, match="FirstName value must be between 1 and 64 characters long"):
-            FirstName(long_name)
-
-    def test_invalid_type(self):
-        with pytest.raises(TypeError, match="FirstName value must be a str"):
-            FirstName(123)
-
-    def test_unicode_characters(self):
-        first_name = FirstName("Jos�")
-        assert first_name.value == "Jos�"
+    @pytest.mark.parametrize("invalid_value,expected_error", [
+        (123, "FirstName value must be a str"),
+        (None, "FirstName value must be a str"),
+        ([], "FirstName value must be a str"),
+        (12.5, "FirstName value must be a str"),
+    ])
+    def test_invalid_type(self, invalid_value, expected_error):
+        with pytest.raises(TypeError, match=expected_error):
+            FirstName(invalid_value)
 
 
 class TestLastName:
-    def test_valid_last_name(self):
-        last_name = LastName("Doe")
-        assert last_name.value == "Doe"
+    @pytest.mark.parametrize("value,expected", [
+        ("Doe", "Doe"),
+        ("", ""),
+        ("A" * 64, "A" * 64),
+        ("Smith-Jones", "Smith-Jones"),
+        ("O'Connor", "O'Connor"),
+    ])
+    def test_valid_last_name(self, value, expected):
+        last_name = LastName(value)
+        assert last_name.value == expected
 
-    def test_minimum_length_zero(self):
-        last_name = LastName("")
-        assert last_name.value == ""
+    @pytest.mark.parametrize("invalid_value,expected_error", [
+        ("A" * 65, "LastName value must be between 0 and 64 characters long"),
+        ("A" * 100, "LastName value must be between 0 and 64 characters long"),
+    ])
+    def test_invalid_length(self, invalid_value, expected_error):
+        with pytest.raises(ValueError, match=expected_error):
+            LastName(invalid_value)
 
-    def test_maximum_length(self):
-        long_name = "A" * 64
-        last_name = LastName(long_name)
-        assert last_name.value == long_name
-
-    def test_too_long(self):
-        long_name = "A" * 65
-        with pytest.raises(ValueError, match="LastName value must be between 0 and 64 characters long"):
-            LastName(long_name)
-
-    def test_invalid_type(self):
-        with pytest.raises(TypeError, match="LastName value must be a str"):
-            LastName(123)
+    @pytest.mark.parametrize("invalid_value,expected_error", [
+        (123, "LastName value must be a str"),
+        (None, "LastName value must be a str"),
+        ([], "LastName value must be a str"),
+        (12.5, "LastName value must be a str"),
+    ])
+    def test_invalid_type(self, invalid_value, expected_error):
+        with pytest.raises(TypeError, match=expected_error):
+            LastName(invalid_value)
 
 
 class TestUsername:
-    def test_valid_username(self):
-        username = Username("john_doe")
-        assert username.value == "john_doe"
+    @pytest.mark.parametrize("value,expected", [
+        ("john_doe", "john_doe"),
+        ("john", "john"),
+        ("a" * 32, "a" * 32),
+        ("user123", "user123"),
+        ("test_user_name", "test_user_name"),
+    ])
+    def test_valid_username(self, value, expected):
+        username = Username(value)
+        assert username.value == expected
 
-    def test_minimum_length(self):
-        username = Username("john")
-        assert username.value == "john"
+    @pytest.mark.parametrize("invalid_value,expected_error", [
+        ("abc", "Username value must be between 4 and 32 characters long"),
+        ("a" * 33, "Username value must be between 4 and 32 characters long"),
+        ("a" * 50, "Username value must be between 4 and 32 characters long"),
+        ("", "Username value must be between 4 and 32 characters long"),
+    ])
+    def test_invalid_length(self, invalid_value, expected_error):
+        with pytest.raises(ValueError, match=expected_error):
+            Username(invalid_value)
 
-    def test_maximum_length(self):
-        long_username = "a" * 32
-        username = Username(long_username)
-        assert username.value == long_username
-
-    def test_too_short(self):
-        with pytest.raises(ValueError, match="Username value must be between 4 and 32 characters long"):
-            Username("abc")
-
-    def test_too_long(self):
-        long_username = "a" * 33
-        with pytest.raises(ValueError, match="Username value must be between 4 and 32 characters long"):
-            Username(long_username)
-
-    def test_invalid_type(self):
-        with pytest.raises(TypeError, match="Username value must be a str"):
-            Username(123)
+    @pytest.mark.parametrize("invalid_value,expected_error", [
+        (123, "Username value must be a str"),
+        (None, "Username value must be a str"),
+        ([], "Username value must be a str"),
+        (12.5, "Username value must be a str"),
+    ])
+    def test_invalid_type(self, invalid_value, expected_error):
+        with pytest.raises(TypeError, match=expected_error):
+            Username(invalid_value)
 
 
 class TestBio:
-    def test_valid_bio(self):
-        bio = Bio("Software developer")
-        assert bio.value == "Software developer"
+    @pytest.mark.parametrize("value,expected", [
+        ("Software developer", "Software developer"),
+        ("", ""),
+        ("A" * 160, "A" * 160),
+        ("D�veloppeur =h=�", "D�veloppeur =h=�"),
+        ("Multi-line\nbio content", "Multi-line\nbio content"),
+    ])
+    def test_valid_bio(self, value, expected):
+        bio = Bio(value)
+        assert bio.value == expected
 
-    def test_empty_bio(self):
-        bio = Bio("")
-        assert bio.value == ""
+    @pytest.mark.parametrize("invalid_value,expected_error", [
+        ("A" * 161, "Bio value must be between 0 and 160 characters long"),
+        ("A" * 200, "Bio value must be between 0 and 160 characters long"),
+    ])
+    def test_invalid_length(self, invalid_value, expected_error):
+        with pytest.raises(ValueError, match=expected_error):
+            Bio(invalid_value)
 
-    def test_maximum_length(self):
-        long_bio = "A" * 160
-        bio = Bio(long_bio)
-        assert bio.value == long_bio
-
-    def test_too_long(self):
-        long_bio = "A" * 161
-        with pytest.raises(ValueError, match="Bio value must be between 0 and 160 characters long"):
-            Bio(long_bio)
-
-    def test_invalid_type(self):
-        with pytest.raises(TypeError, match="Bio value must be a str"):
-            Bio(123)
-
-    def test_unicode_characters(self):
-        bio = Bio("D�veloppeur =h=�")
-        assert bio.value == "D�veloppeur =h=�"
+    @pytest.mark.parametrize("invalid_value,expected_error", [
+        (123, "Bio value must be a str"),
+        (None, "Bio value must be a str"),
+        ([], "Bio value must be a str"),
+        (12.5, "Bio value must be a str"),
+    ])
+    def test_invalid_type(self, invalid_value, expected_error):
+        with pytest.raises(TypeError, match=expected_error):
+            Bio(invalid_value)
 
 
 class TestValueObjectsEquality:

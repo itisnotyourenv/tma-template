@@ -61,84 +61,81 @@ class TestPostgresConfig:
         expected_url = "postgresql+asyncpg://test_user:test_pass@localhost:5432/test_db"
         assert config.url == expected_url
 
-    def test_url_with_special_characters(self):
+    @pytest.mark.parametrize("host,port,user,password,db,expected_url", [
+        (
+            "localhost", 5432, "test_user", "test_pass", "test_db",
+            "postgresql+asyncpg://test_user:test_pass@localhost:5432/test_db"
+        ),
+        (
+            "db.example.com", 5432, "user@domain", "pass@word!", "test-db",
+            "postgresql+asyncpg://user@domain:pass@word!@db.example.com:5432/test-db"
+        ),
+        (
+            "localhost", 3306, "user", "pass", "db",
+            "postgresql+asyncpg://user:pass@localhost:3306/db"
+        ),
+    ])
+    def test_url_property_variations(self, host, port, user, password, db, expected_url):
         config = PostgresConfig(
-            host="db.example.com",
-            port=5432,
-            user="user@domain",
-            password="pass@word!",
-            db="test-db"
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            db=db
         )
-        
-        expected_url = "postgresql+asyncpg://user@domain:pass@word!@db.example.com:5432/test-db"
-        assert config.url == expected_url
-
-    def test_url_with_different_port(self):
-        config = PostgresConfig(
-            host="localhost",
-            port=3306,
-            user="user",
-            password="pass",
-            db="db"
-        )
-        
-        expected_url = "postgresql+asyncpg://user:pass@localhost:3306/db"
         assert config.url == expected_url
 
     def test_missing_required_fields(self):
         with pytest.raises(ValidationError):
             PostgresConfig()
 
-    def test_invalid_port_type(self):
-        with pytest.raises(ValidationError):
-            PostgresConfig(
+    @pytest.mark.parametrize("port,echo,should_raise", [
+        ("invalid_port", False, True),  # Invalid port type
+        (5432, "invalid", True),        # Invalid echo type
+        (-1, False, True),              # Negative port
+        (65536, False, False),          # High port (valid)
+        (5432, True, False),            # Valid config
+        (3306, False, False),           # Valid different port
+    ])
+    def test_port_and_echo_validation(self, port, echo, should_raise):
+        if should_raise:
+            with pytest.raises(ValidationError):
+                PostgresConfig(
+                    host="localhost",
+                    port=port,
+                    user="user",
+                    password="pass",
+                    db="db",
+                    echo=echo
+                )
+        else:
+            config = PostgresConfig(
                 host="localhost",
-                port="invalid_port",
-                user="user",
-                password="pass",
-                db="db"
-            )
-
-    def test_invalid_echo_type(self):
-        with pytest.raises(ValidationError):
-            PostgresConfig(
-                host="localhost",
-                port=5432,
+                port=port,
                 user="user",
                 password="pass",
                 db="db",
-                echo="invalid"
+                echo=echo
             )
+            assert config.port == port
+            assert config.echo == echo
 
-    def test_negative_port(self):
-        with pytest.raises(ValidationError):
-            PostgresConfig(
-                host="localhost",
-                port=-1,
-                user="user",
-                password="pass",
-                db="db"
-            )
-
-    def test_zero_port(self):
+    @pytest.mark.parametrize("port,expected", [
+        (0, 0),
+        (5432, 5432),
+        (65535, 65535),
+        (1, 1),
+        (8080, 8080),
+    ])
+    def test_valid_ports(self, port, expected):
         config = PostgresConfig(
             host="localhost",
-            port=0,
+            port=port,
             user="user",
             password="pass",
             db="db"
         )
-        assert config.port == 0
-
-    def test_high_port_number(self):
-        config = PostgresConfig(
-            host="localhost",
-            port=65535,
-            user="user",
-            password="pass",
-            db="db"
-        )
-        assert config.port == 65535
+        assert config.port == expected
 
 
 class TestAuthConfig:
@@ -157,29 +154,28 @@ class TestAuthConfig:
         with pytest.raises(ValidationError):
             AuthConfig()
 
-    def test_invalid_expire_minutes_type(self):
-        with pytest.raises(ValidationError):
-            AuthConfig(
+    @pytest.mark.parametrize("expire_minutes,should_raise,expected", [
+        ("invalid", True, None),    # Invalid type
+        (30, False, 30),            # Valid positive
+        (-1, False, -1),            # Negative (allowed)
+        (0, False, 0),              # Zero (allowed)
+        (60, False, 60),            # Different valid value
+    ])
+    def test_expire_minutes_validation(self, expire_minutes, should_raise, expected):
+        if should_raise:
+            with pytest.raises(ValidationError):
+                AuthConfig(
+                    secret_key="test_secret_key",
+                    algorithm="HS256",
+                    access_token_expire_minutes=expire_minutes
+                )
+        else:
+            config = AuthConfig(
                 secret_key="test_secret_key",
                 algorithm="HS256",
-                access_token_expire_minutes="invalid"
+                access_token_expire_minutes=expire_minutes
             )
-
-    def test_negative_expire_minutes(self):
-        config = AuthConfig(
-            secret_key="test_secret_key",
-            algorithm="HS256",
-            access_token_expire_minutes=-1
-        )
-        assert config.access_token_expire_minutes == -1
-
-    def test_zero_expire_minutes(self):
-        config = AuthConfig(
-            secret_key="test_secret_key",
-            algorithm="HS256",
-            access_token_expire_minutes=0
-        )
-        assert config.access_token_expire_minutes == 0
+            assert config.access_token_expire_minutes == expected
 
 
 class TestTelegramConfig:
@@ -194,9 +190,14 @@ class TestTelegramConfig:
         with pytest.raises(ValidationError):
             TelegramConfig()
 
-    def test_empty_bot_token_allowed(self):
-        config = TelegramConfig(bot_token="")
-        assert config.bot_token == ""
+    @pytest.mark.parametrize("bot_token,expected", [
+        ("123456789:ABCdefGHIjklMNOpqrsTUVwxyz", "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"),
+        ("", ""),
+        ("test_token", "test_token"),
+    ])
+    def test_bot_token_values(self, bot_token, expected):
+        config = TelegramConfig(bot_token=bot_token)
+        assert config.bot_token == expected
 
 
 class TestConfig:
@@ -222,13 +223,14 @@ class TestConfig:
         assert config.auth == auth_config
         assert config.telegram == telegram_config
 
-    def test_missing_postgres_config(self):
-        with pytest.raises(ValidationError):
-            Config()
-
-    def test_invalid_postgres_config(self):
-        with pytest.raises(ValidationError):
-            Config(postgres="invalid")
+    @pytest.mark.parametrize("postgres,should_raise", [
+        (None, True),          # Missing postgres config
+        ("invalid", True),     # Invalid postgres config
+    ])
+    def test_config_validation(self, postgres, should_raise):
+        if should_raise:
+            with pytest.raises(ValidationError):
+                Config(postgres=postgres)
 
 
 class TestLoadConfig:
