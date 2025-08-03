@@ -3,7 +3,7 @@ from typing import AsyncGenerator, AsyncIterator
 
 import httpx
 import pytest
-from dishka import AsyncContainer, Provider, Scope, make_async_container
+from dishka import AsyncContainer, make_async_container
 from dishka.integrations.litestar import setup_dishka
 from httpx import AsyncClient
 from litestar import Litestar
@@ -88,7 +88,7 @@ async def dishka_container_for_tests(
     await container.close()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 async def sqlalchemy_engine(test_config: Config) -> AsyncGenerator[AsyncEngine, None]:
     engine = create_async_engine(test_config.postgres.url, echo=False)
     yield engine
@@ -110,7 +110,7 @@ async def db_session(
 
 
 @pytest.fixture(scope="session")
-async def async_session_maker(sqlalchemy_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+def async_session_maker(sqlalchemy_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(sqlalchemy_engine, expire_on_commit=False)
 
 
