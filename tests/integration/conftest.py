@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy import text
 
 from src.domain.user.vo import UserId
 from src.infrastructure.config import Config
@@ -72,7 +73,7 @@ async def dishka_container_for_tests(
     test_config: Config,
     sqlalchemy_engine: AsyncEngine,
 ) -> AsyncGenerator[AsyncContainer, None]:
-    await clear_db(sqlalchemy_engine)
+    await clear_db_data(sqlalchemy_engine)
 
     interactor_provider_instances = [
         interactor() for interactor in interactor_providers
@@ -91,13 +92,32 @@ async def dishka_container_for_tests(
 @pytest.fixture(scope="session")
 async def sqlalchemy_engine(test_config: Config) -> AsyncGenerator[AsyncEngine, None]:
     engine = create_async_engine(test_config.postgres.url, echo=False)
+    await setup_db_schema(engine)
     yield engine
     await engine.dispose(close=True)
 
-async def clear_db(sqlalchemy_engine: AsyncEngine) -> None:
+async def setup_db_schema(sqlalchemy_engine: AsyncEngine) -> None:
+    """Create database schema once per session."""
     async with sqlalchemy_engine.begin() as conn:
-        await conn.run_sync(BaseORMModel.metadata.drop_all)
         await conn.run_sync(BaseORMModel.metadata.create_all)
+
+
+async def clear_db_data(sqlalchemy_engine: AsyncEngine) -> None:
+    """Fast database cleanup using table truncation instead of schema recreation."""
+    async with sqlalchemy_engine.begin() as conn:
+        # Get all table names from metadata
+        tables = list(BaseORMModel.metadata.tables.keys())
+        
+        if tables:
+            # Disable foreign key checks for faster truncation
+            await conn.execute(text("SET session_replication_role = replica;"))
+            
+            # Truncate all tables
+            for table in tables:
+                await conn.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE;"))
+            
+            # Re-enable foreign key checks
+            await conn.execute(text("SET session_replication_role = DEFAULT;"))
 
 
 @pytest.fixture(scope="function")
@@ -119,6 +139,6 @@ async def native_db_session(
     sqlalchemy_engine: AsyncEngine,
     async_session_maker: async_sessionmaker[AsyncSession],
 ) -> AsyncIterator[AsyncSession]:
-    await clear_db(sqlalchemy_engine)
+    await clear_db_data(sqlalchemy_engine)
     async with async_session_maker() as session:
         yield session
