@@ -5,10 +5,15 @@ from dishka.integrations.litestar import setup_dishka
 from src.application.common.exceptions import ValidationError
 from src.infrastructure.config import load_config, Config
 from src.infrastructure.di.auth import AuthProvider
-from src.infrastructure.di.interactors.auth import AuthInteractorProvider
+from src.infrastructure.di import interactor_providers
 from src.infrastructure.di.db import DBProvider
+from src.application.auth.exceptions import InvalidInitDataError
 
-from .exception import custom_exception_handler, validation_error_handler
+from .exception import (
+    custom_exception_handler,
+    validation_error_handler,
+    exception_logs_handler,
+)
 from .utils import setup_routes
 
 
@@ -20,6 +25,7 @@ def prepare_app() -> Litestar:
         ],
         exception_handlers={
             Exception: custom_exception_handler,
+            InvalidInitDataError: exception_logs_handler,
             ValidationError: validation_error_handler,
         },
     )
@@ -31,10 +37,14 @@ def create_app() -> Litestar:
 
     app = prepare_app()
 
+    interactor_provider_instances = [
+        interactor() for interactor in interactor_providers
+    ]
+
     container = make_async_container(
         AuthProvider(),
-        AuthInteractorProvider(),
-        DBProvider(config.postgres),
+        DBProvider(config.postgres),  # todo - pass config with context
+        *interactor_provider_instances,
         context={Config: config},
     )
 

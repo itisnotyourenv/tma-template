@@ -51,13 +51,8 @@ api:
 test:
     docker compose -f docker-compose-test.yml up --build -d
     pytest
+    docker compose -f docker-compose-test.yml down -v
 
 just test-db-up:
     docker compose -f docker-compose-test.yml up --build -d
 
-just test-db-down:
-    docker compose -f docker-compose-test.yml down
-
-just test-db-reset:
-    docker compose -f docker-compose-test.yml down
-    docker compose -f docker-compose-test.yml up --build -d

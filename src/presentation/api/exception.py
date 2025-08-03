@@ -17,6 +17,16 @@ def custom_exception_handler(
     )
 
 
+def exception_logs_handler(
+    _: Request[Any, Any, Any], exc: ValidationError
+) -> Response[Any]:
+    logger.warning(exc)
+    return Response(
+        {"detail": exc.message, "status_code": exc.status_code},
+        status_code=exc.status_code,
+    )
+
+
 def validation_error_handler(
     _: Request[Any, Any, Any], exc: ValidationError
 ) -> Response[Any]:

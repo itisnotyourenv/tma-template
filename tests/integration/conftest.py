@@ -17,6 +17,11 @@ from sqlalchemy.ext.asyncio import (
 from src.domain.user.vo import UserId
 from src.infrastructure.config import Config
 from src.infrastructure.db.models.base import BaseORMModel
+from src.infrastructure.di import (
+    interactor_providers,
+    AuthProvider,
+    DBProvider,
+)
 from src.presentation.api.app import prepare_app
 
 
@@ -65,17 +70,25 @@ def authenticated_client(create_authenticated_client) -> tuple[AsyncClient, User
 @pytest.fixture(scope="function")
 async def dishka_container_for_tests(
     test_config: Config,
+    sqlalchemy_engine: AsyncEngine,
 ) -> AsyncGenerator[AsyncContainer, None]:
-    mock_provider = Provider(scope=Scope.APP)
+    await clear_db(sqlalchemy_engine)
+
+    interactor_provider_instances = [
+        interactor() for interactor in interactor_providers
+    ]
 
     container = make_async_container(
+        AuthProvider(),
+        DBProvider(test_config.postgres),  # todo - pass config with context
+        *interactor_provider_instances,
         context={Config: test_config},
     )
     yield container
     await container.close()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 async def sqlalchemy_engine(test_config: Config) -> AsyncGenerator[AsyncEngine, None]:
     engine = create_async_engine(test_config.postgres.url, echo=False)
     yield engine
