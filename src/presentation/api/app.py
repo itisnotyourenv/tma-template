@@ -22,10 +22,14 @@ from .exception import (
 from .middleware.auth import AuthMiddleware
 from .providers import provide_user_id
 from .utils import setup_routes
+from ...infrastructure.auth import AuthServiceImpl
 
 
 def prepare_app(config: Config) -> Litestar:
     routes = setup_routes()
+
+    auth_service = AuthServiceImpl(config)
+
     app = Litestar(
         route_handlers=[
             routes,
@@ -36,7 +40,7 @@ def prepare_app(config: Config) -> Litestar:
             InvalidInitDataError: exception_logs_handler,
             ValidationError: validation_error_handler,
         },
-        middleware=[DefineMiddleware(AuthMiddleware, exclude=['auth', 'health'], config=config)],
+        middleware=[DefineMiddleware(AuthMiddleware, exclude=['auth', 'health'], auth_service=auth_service)],
         dependencies={
             # todo - rewrite with Dishka
             "user_id": Provide(provide_user_id, sync_to_thread=False)

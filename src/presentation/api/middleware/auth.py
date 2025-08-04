@@ -19,7 +19,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
     def __init__(
         self,
         app: ASGIApp,
-        config: Config,
+        auth_service: AuthService,
         exclude: str | list[str] | None = None,
         exclude_from_auth_key: str = "exclude_from_auth",
         exclude_http_methods: Sequence[Method] | None = None,
@@ -34,7 +34,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
             exclude_http_methods: A sequence of http methods that do not require authentication.
             scopes: ASGI scopes processed by the authentication middleware.
         """
-        self.auth_service: AuthService = AuthServiceImpl(config=config)
+        self.auth_service: AuthService = auth_service
         super().__init__(
             app, exclude, exclude_from_auth_key, exclude_http_methods, scopes
         )
