@@ -92,6 +92,38 @@ The `.pre-commit-config.yaml` file configures:
 - **Ruff formatting** for consistency
 - **Latest Ruff version** for best performance
 
+## CI/CD Integration
+
+### GitHub Actions Workflows
+
+The project includes comprehensive CI/CD workflows:
+
+#### Main CI Pipeline (`.github/workflows/ci.yml`)
+- **Code Quality**: Ruff linting and formatting checks
+- **Testing**: Full test suite with PostgreSQL integration
+- **Security**: Bandit security scanning via Ruff
+- **Type Checking**: MyPy static type analysis (informational)
+- **Build Verification**: Application import and startup checks
+
+#### PR Validation (`.github/workflows/pr-validation.yml`)
+- **PR Format**: Semantic commit message validation
+- **Dependencies**: Lock file synchronization checks
+- **Security**: Automated security scanning
+- **Required Files**: Configuration file presence validation
+
+### Status Checks
+All PRs must pass:
+- ✅ Ruff linting (`ruff check`)
+- ✅ Ruff formatting (`ruff format --check`)
+- ✅ Test suite execution
+- ✅ Security scan (no high-severity issues)
+- ✅ Build verification
+
+### Automatic Dependency Caching
+- **uv caching** enabled for faster CI builds
+- **Lock file validation** ensures reproducible builds
+- **Matrix testing** across Python versions (currently 3.13)
+
 ## Next Steps
 
 1. **Set up pre-commit hooks** (recommended):
@@ -105,9 +137,17 @@ The `.pre-commit-config.yaml` file configures:
    ruff format src/
    ```
 
-3. **Gradually add type annotations** to improve code quality
+3. **Run CI checks locally**:
+   ```bash
+   # Full CI simulation
+   ruff check src/ tests/ --output-format=github
+   ruff format src/ tests/ --check
+   pytest tests/ -v
+   ```
 
-4. **Integrate with CI/CD** to enforce quality standards
+4. **Gradually add type annotations** to improve code quality
+
+5. **Configure branch protection** in GitHub repository settings
 
 ## IDE Integration
 

@@ -1,0 +1,140 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  validate-pr:
+    name: Validate PR Requirements
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check PR title format
+      uses: amannn/action-semantic-pull-request@v5
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        types: |
+          feat
+          fix
+          docs
+          style
+          refactor
+          perf
+          test
+          build
+          ci
+          chore
+          revert
+        requireScope: false
+        disallowScopes: |
+          release
+        subjectPattern: ^(?![A-Z]).+$
+        subjectPatternError: |
+          The subject "{subject}" found in the pull request title "{title}"
+          didn't match the configured pattern. Please ensure that the subject
+          doesn't start with an uppercase character.
+
+  check-required-files:
+    name: Check Required Files
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check for required configuration files
+      run: |
+        required_files=(
+          ".pre-commit-config.yaml"
+          "pyproject.toml"
+          "uv.lock"
+        )
+        
+        missing_files=()
+        for file in "${required_files[@]}"; do
+          if [[ ! -f "$file" ]]; then
+            missing_files+=("$file")
+          fi
+        done
+        
+        if [[ ${#missing_files[@]} -gt 0 ]]; then
+          echo "❌ Missing required files:"
+          printf ' - %s\n' "${missing_files[@]}"
+          exit 1
+        else
+          echo "✅ All required configuration files are present"
+        fi
+
+  check-dependencies:
+    name: Check Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+        
+    - name: Check if dependencies are in sync
+      run: |
+        uv sync --frozen
+        if ! uv lock --check; then
+          echo "❌ uv.lock is out of sync with pyproject.toml"
+          echo "Please run 'uv lock' to update the lock file"
+          exit 1
+        else
+          echo "✅ Dependencies are in sync"
+        fi
+
+  security-check:
+    name: Security Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+        
+    - name: Install dependencies
+      run: uv sync
+      
+    - name: Run security checks
+      run: |
+        echo "🔍 Running security scan..."
+        uv run ruff check src/ --select=S --output-format=github
+        
+        # Check for common security issues in config files
+        echo "🔍 Checking for potential secrets in config files..."
+        if grep -r -i "password\|secret\|key\|token" --include="*.yaml" --include="*.yml" --include="*.json" . | grep -v "example" | grep -v "template"; then
+          echo "⚠️  Potential secrets found in configuration files"
+          echo "Please review and ensure no actual secrets are committed"
+        else
+          echo "✅ No obvious secrets found in configuration files"
+        fi
