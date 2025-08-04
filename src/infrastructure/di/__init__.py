@@ -10,7 +10,8 @@ infra_providers = [
 all_providers = interactor_providers.extend(infra_providers)
 
 __all__ = [
-    'interactor_providers',
+    DBProvider,
+    interactor_providers,
     infra_providers,
     all_providers,
 ]

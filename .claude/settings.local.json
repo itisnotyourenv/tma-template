@@ -9,7 +9,8 @@
       "Bash(pytest:*)",
       "Bash(gh issue create:*)",
       "Bash(gh issue:*)",
-      "Bash(time python:*)"
+      "Bash(time python:*)",
+      "Bash(python test_jwt_validation.py:*)"
     ],
     "deny": []
   }

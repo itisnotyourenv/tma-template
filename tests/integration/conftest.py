@@ -27,8 +27,8 @@ from src.presentation.api.app import prepare_app
 
 
 @pytest.fixture(scope="session")
-def test_app() -> Litestar:
-    app = prepare_app()
+def test_app(test_config: Config) -> Litestar:
+    app = prepare_app(test_config)
     app.debug = True
     return app
 
