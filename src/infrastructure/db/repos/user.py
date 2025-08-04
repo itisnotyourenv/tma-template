@@ -1,10 +1,10 @@
 from typing import Literal, Unpack
 
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import select, update
+from sqlalchemy.dialects.postgresql import insert
 
 from src.domain.user.entity import User
-from src.domain.user.repository import UserRepository, UpdateUserDTO, CreateUserDTO
+from src.domain.user.repository import CreateUserDTO, UpdateUserDTO, UserRepository
 from src.infrastructure.db.models.user import UserModel
 from src.infrastructure.db.repos.base import BaseSQLAlchemyRepo
 

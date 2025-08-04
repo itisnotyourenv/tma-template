@@ -1,6 +1,8 @@
-from sqlalchemy import TypeDecorator, Integer, String
+from typing import Optional, Any
 
-from src.domain.user.vo import UserId, FirstName, LastName, Username, Bio
+from sqlalchemy import Integer, String, TypeDecorator, Dialect
+
+from src.domain.user.vo import Bio, FirstName, LastName, UserId, Username
 
 
 class UserIdType(TypeDecorator):
@@ -14,7 +16,7 @@ class UserIdType(TypeDecorator):
             return value.value
         return value
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value: Optional[Any], dialect: Dialect) -> UserId | None:
         if value is None:
             return None
         return UserId(value)
@@ -31,7 +33,7 @@ class FirstNameType(TypeDecorator):
             return value.value
         return value
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value: Optional[Any], dialect: Dialect) -> FirstName | None:
         if value is None:
             return None
         return FirstName(value)
@@ -48,7 +50,7 @@ class LastNameType(TypeDecorator):
             return value.value
         return value
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value: Optional[Any], dialect: Dialect) -> LastName | None:
         if value is None:
             return None
         return LastName(value)
@@ -65,7 +67,7 @@ class UsernameType(TypeDecorator):
             return value.value
         return value
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value: Optional[Any], dialect: Dialect) -> Username | None:
         if value is None:
             return None
         return Username(value)
@@ -82,7 +84,7 @@ class BioType(TypeDecorator):
             return value.value
         return value
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value: Optional[Any], dialect: Dialect) -> Bio | None:
         if value is None:
             return None
         return Bio(value)

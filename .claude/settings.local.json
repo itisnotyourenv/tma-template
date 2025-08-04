@@ -14,7 +14,10 @@
       "Bash(gh pr view:*)",
       "Bash(find:*)",
       "Bash(gh pr comment:*)",
-      "Bash(python -m pytest tests/infrastructure/test_auth.py::TestAuthServiceImpl::test_extract_user_from_token_success -v)"
+      "Bash(python -m pytest tests/infrastructure/test_auth.py::TestAuthServiceImpl::test_extract_user_from_token_success -v)",
+      "Bash(gh api:*)",
+      "Bash(ls:*)",
+      "Bash(ruff:*)"
     ],
     "deny": []
   }

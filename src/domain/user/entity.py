@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .vo import UserId, FirstName, LastName, Username, Bio
+from .vo import Bio, FirstName, LastName, UserId, Username
 
 
 @dataclass

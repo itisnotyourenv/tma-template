@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 from aiogram.utils.web_app import safe_parse_webapp_init_data
 from jose import ExpiredSignatureError, JWTError
-from jose.jwt import encode, decode
+from jose.jwt import decode, encode
 
 from src.application.auth.exceptions import InvalidInitDataError
 from src.application.common.exceptions import ValidationError

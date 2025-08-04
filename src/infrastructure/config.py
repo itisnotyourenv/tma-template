@@ -16,7 +16,7 @@ class PostgresConfig(BaseModel):
     def url(self) -> str:
         return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.db}"
 
-    @field_validator("port")  # noqa
+    @field_validator("port")
     @classmethod
     def port_validator(cls, v):
         if v < 0:
