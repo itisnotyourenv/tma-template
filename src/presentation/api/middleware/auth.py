@@ -74,7 +74,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
     def _extract_bearer_token(headers: Headers) -> str | None:
         """Extract Bearer token from Authorization header."""
         auth_header = headers.get("Authorization")
-        if not auth_header:
-            return None
 
-        return auth_header
+        if auth_header and auth_header.startswith("Bearer "):
+            return auth_header[7:]  # Remove "Bearer " prefix
+        return None
