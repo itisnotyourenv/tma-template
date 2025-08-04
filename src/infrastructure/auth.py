@@ -90,5 +90,5 @@ class AuthServiceImpl(AuthService):
                 raise ValidationError("Token missing subject")
 
             return int(user_id_str)
-        except (JWTError, ValueError, TypeError):
+        except (JWTError, ValueError, TypeError, AttributeError):
             raise ValidationError("Cannot extract user from token")
