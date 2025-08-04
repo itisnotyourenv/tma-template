@@ -75,20 +75,3 @@ class AuthServiceImpl(AuthService):
             raise ValidationError("Invalid token")
         except (ValueError, TypeError):
             raise ValidationError("Invalid user ID in token")
-
-    def extract_user_from_token(self, token: str) -> int:
-        """Extract user_id from JWT token without full validation."""
-        try:
-            # Decode without verification for extracting claims
-            payload = decode(
-                token,
-                key="",  # Empty key since we're not verifying signature
-                options={"verify_signature": False, "verify_exp": False},
-            )
-            user_id_str = payload.get("sub")
-            if user_id_str is None:
-                raise ValidationError("Token missing subject")
-
-            return int(user_id_str)
-        except (JWTError, ValueError, TypeError, AttributeError):
-            raise ValidationError("Cannot extract user from token")
