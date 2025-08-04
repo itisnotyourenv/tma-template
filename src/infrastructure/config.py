@@ -18,7 +18,7 @@ class PostgresConfig(BaseModel):
 
     @field_validator("port")
     @classmethod
-    def port_validator(cls, v):
+    def port_validator(cls, v: int) -> int:
         if v < 0:
             raise ValueError("Port must be between 1 and 65535")
         return v
