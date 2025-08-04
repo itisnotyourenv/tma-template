@@ -67,17 +67,45 @@ After configuration, the codebase has:
   - Code modernization opportunities (7 issues)
   - Exception handling improvements (5 issues)
 
+## Pre-commit Hooks (Recommended)
+
+### Setup Pre-commit Hooks
+Pre-commit hooks automatically run code quality checks before each commit:
+
+```bash
+# Install pre-commit hooks
+pre-commit install
+
+# Run hooks manually on all files (optional)
+pre-commit run --all-files
+```
+
+### How It Works
+- **Automatic checks** before every `git commit`
+- **Auto-fixes** issues where possible (imports, formatting)
+- **Prevents commits** with quality issues
+- **Consistent standards** across all contributors
+
+### Configuration
+The `.pre-commit-config.yaml` file configures:
+- **Ruff linting** with auto-fix
+- **Ruff formatting** for consistency
+- **Latest Ruff version** for best performance
+
 ## Next Steps
 
-1. **Auto-fix what's possible**:
+1. **Set up pre-commit hooks** (recommended):
+   ```bash
+   pre-commit install
+   ```
+
+2. **Auto-fix existing issues**:
    ```bash
    ruff check src/ --fix
    ruff format src/
    ```
 
-2. **Gradually add type annotations** to improve code quality
-
-3. **Set up pre-commit hooks** to catch issues before commits
+3. **Gradually add type annotations** to improve code quality
 
 4. **Integrate with CI/CD** to enforce quality standards
 

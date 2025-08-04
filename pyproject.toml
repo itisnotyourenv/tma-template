@@ -17,6 +17,7 @@ dependencies = [
     "pytest>=8.4.1",
     "python-jose~=3.4.0",
     "pyyaml>=6.0.2",
+    "pre-commit>=4.0.1",
     "ruff>=0.12.5",
     "sqlalchemy>=2.0.41",
     "ty>=0.0.1a16",
