@@ -10,7 +10,10 @@
       "Bash(gh issue create:*)",
       "Bash(gh issue:*)",
       "Bash(time python:*)",
-      "Bash(python test_jwt_validation.py:*)"
+      "Bash(python test_jwt_validation.py:*)",
+      "Bash(gh pr view:*)",
+      "Bash(find:*)",
+      "Bash(gh pr comment:*)"
     ],
     "deny": []
   }
