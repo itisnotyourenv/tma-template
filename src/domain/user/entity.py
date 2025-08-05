@@ -8,5 +8,5 @@ class User:
     id: UserId
     first_name: FirstName
     last_name: LastName | None
-    username: Username
+    username: Username | None
     bio: Bio | None

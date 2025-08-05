@@ -29,7 +29,6 @@ class UserRepository(Protocol):
     @overload
     async def get_user(self, identifier: Username) -> User | None: ...
 
-
     @abstractmethod
     async def get_user(self, identifier: UserId | Username) -> User | None:
         raise NotImplementedError

@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 import logging
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
-from litestar.connection import ASGIConnection
 from litestar.datastructures import Headers
 from litestar.exceptions import NotAuthorizedException
 from litestar.middleware import AbstractAuthenticationMiddleware, AuthenticationResult
-from litestar.types import ASGIApp, Method, Scopes
 
 from src.application.common.exceptions import ValidationError
 from src.application.interfaces.auth import AuthService
+
+if TYPE_CHECKING:
+    from litestar.connection import ASGIConnection
+    from litestar.types import ASGIApp, Method, Scopes
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +26,9 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
         exclude: str | list[str] | None = None,
         exclude_from_auth_key: str = "exclude_from_auth",
         exclude_http_methods: Sequence[Method] | None = None,
-        scopes: Scopes = None,
+        scopes: Scopes | None = None,
     ) -> None:
-        """Initialize ``AbstractAuthenticationMiddleware``.
+        """Initialize Custom Auth Middleware.
 
         Args:
             app: An ASGIApp, this value is the next ASGI handler to call in the middleware stack.

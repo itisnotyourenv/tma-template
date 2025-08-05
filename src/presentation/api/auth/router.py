@@ -3,7 +3,7 @@ import logging
 from dishka.integrations.litestar import FromDishka, inject
 from litestar import Router, post
 
-from src.application.auth.tg import AuthTgInputDTO, AuthTgInteractor
+from src.application.auth.tg import AuthTgInputDTO, AuthTgInteractor, AuthTgOutputDTO
 from src.presentation.api.auth.schemas import AuthTgRequest
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 async def auth_user_handler(
     data: AuthTgRequest,
     interactor: FromDishka[AuthTgInteractor],
-) -> dict:
+) -> AuthTgOutputDTO:
     response = await interactor(AuthTgInputDTO(data.init_data))
     return response
 

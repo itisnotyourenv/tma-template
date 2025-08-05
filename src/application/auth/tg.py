@@ -48,7 +48,7 @@ class AuthTgInteractor(Interactor[AuthTgInputDTO, AuthTgOutputDTO]):
             )
         else:
             await self.user_repository.update_user(
-                user_id=parsed_data.user_id,
+                user_id=UserId(parsed_data.user_id),
                 username=parsed_data.username,
                 first_name=parsed_data.first_name,
                 last_name=parsed_data.last_name,
