@@ -1,10 +1,10 @@
 Your goal is to write a commit message and open a pull request.
 
-1) Write a clear and concise commit message that follows conventional commit format (if applicable). It should explain what was changed and why.
+You must strictly follow the rules defined in **.github/pull_request_template.md**.
 
-2) Create a pull request with:
-* A descriptive title
-* A summary of changes
-* Any relevant context or background
-* Linked issues (if any)
-* Checklist of tasks done (tests, docs, etc.)
+### Tasks:
+
+1. **Write a commit message**  
+   - Use a clear and concise message  
+   - Follow the **[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)** format if applicable  
+   - Explain *what* was changed and *why*
