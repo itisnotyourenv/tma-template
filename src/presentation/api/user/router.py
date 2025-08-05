@@ -2,39 +2,32 @@ import logging
 
 from dishka.integrations.litestar import FromDishka, inject
 from litestar import Router, get
-from litestar.exceptions import NotFoundException
 
-from src.domain.user import UserRepository
+from src.application.user.get_me import (
+    GetUserProfileInputDTO,
+    GetUserProfileInteractor,
+    GetUserProfileOutputDTO,
+)
 from src.domain.user.vo import UserId
-from src.presentation.api.user.schemas import UserProfileResponse
+from src.presentation.api.user.schemas import UserProfileResponseSchema
 
 logger = logging.getLogger(__name__)
 
 
-@get("/profile")
+@get("/profile", return_dto=UserProfileResponseSchema)
 @inject
 async def get_user_profile(
     user_id: UserId,
-    user_repository: FromDishka[UserRepository],
-) -> UserProfileResponse:
+    interactor: FromDishka[GetUserProfileInteractor],
+) -> GetUserProfileOutputDTO:
     """
     Get the authenticated user's profile.
 
     Requires valid JWT token in Authorization header.
     """
-    # todo - refactor, use Interactor
-    user = await user_repository.get_user(user_id)
+    response = await interactor(data=GetUserProfileInputDTO(user_id=user_id))
 
-    if user is None:
-        raise NotFoundException("User not found")
-
-    return UserProfileResponse(
-        id=user.id.value,
-        first_name=user.first_name.value,
-        last_name=user.last_name.value if user.last_name else None,
-        username=user.username.value if user.username else None,
-        bio=user.bio.value if user.bio else None,
-    )
+    return response
 
 
 user_router = Router(
