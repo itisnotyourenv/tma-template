@@ -9,22 +9,20 @@ from src.infrastructure.config import Config
 class TestUserProfile:
     url = "users/profile"
 
-    async def _get_auth_token(self, test_client: AsyncClient, test_config: Config) -> str:
+    async def _get_auth_token(
+        self, test_client: AsyncClient, test_config: Config
+    ) -> str:
         """Helper method to get a valid JWT token for testing."""
-        auth_data = {
-            "init_data": test_config.telegram.tg_init_data
-        }
-        
+        auth_data = {"init_data": test_config.telegram.tg_init_data}
+
         response = await test_client.post("auth", json=auth_data)
         assert response.status_code == HTTPStatus.CREATED
-        
+
         response_data = response.json()
         return response_data["access_token"]
 
     async def _create_authenticated_client(
-        self, 
-        test_client: AsyncClient, 
-        test_config: Config
+        self, test_client: AsyncClient, test_config: Config
     ) -> AsyncClient:
         """Helper method to create an authenticated client with JWT token."""
         token = await self._get_auth_token(test_client, test_config)
@@ -42,7 +40,7 @@ class TestUserProfile:
         response = await client.get(self.url)
 
         assert response.status_code == HTTPStatus.OK
-        
+
         profile_data = response.json()
         # Verify response structure
         assert "id" in profile_data
@@ -50,11 +48,11 @@ class TestUserProfile:
         assert "last_name" in profile_data
         assert "username" in profile_data
         assert "bio" in profile_data
-        
+
         # Verify data types
         assert isinstance(profile_data["id"], int)
         assert isinstance(profile_data["first_name"], str)
-        
+
         # Verify user data from test config
         assert profile_data["first_name"] == "min"
         assert profile_data["username"] == "zurab"
@@ -74,7 +72,7 @@ class TestUserProfile:
     ):
         """Test profile retrieval with invalid authentication token."""
         headers = {"Authorization": "Bearer invalid_token"}
-        
+
         response = await test_client.get(self.url, headers=headers)
 
         assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -85,7 +83,7 @@ class TestUserProfile:
     ):
         """Test profile retrieval with malformed Authorization header."""
         headers = {"Authorization": "InvalidFormat token"}
-        
+
         response = await test_client.get(self.url, headers=headers)
 
         assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -101,18 +99,18 @@ class TestUserProfile:
         response = await client.get(self.url)
 
         assert response.status_code == HTTPStatus.OK
-        
+
         profile_data = response.json()
-        
+
         # Test all required fields exist
         required_fields = ["id", "first_name", "last_name", "username", "bio"]
         for field in required_fields:
             assert field in profile_data, f"Field '{field}' missing from response"
-        
+
         # Test data types
         assert isinstance(profile_data["id"], int)
         assert isinstance(profile_data["first_name"], str)
-        
+
         # Optional fields can be None or strings
         for field in ["last_name", "username", "bio"]:
             assert profile_data[field] is None or isinstance(profile_data[field], str)
@@ -162,13 +160,16 @@ class TestUserProfile:
         assert profile1["first_name"] == profile2["first_name"]
         assert profile1["username"] == profile2["username"]
 
-    @pytest.mark.parametrize("malformed_token", [
-        "",
-        "Bearer",
-        "Bearer ",
-        "NotBearer validtoken",
-        "Bearer invalid.jwt.token",
-    ])
+    @pytest.mark.parametrize(
+        "malformed_token",
+        [
+            "",
+            "Bearer",
+            "Bearer ",
+            "NotBearer validtoken",
+            "Bearer invalid.jwt.token",
+        ],
+    )
     async def test_get_profile_malformed_tokens(
         self,
         test_client: AsyncClient,
@@ -176,7 +177,7 @@ class TestUserProfile:
     ):
         """Test profile retrieval with various malformed tokens."""
         headers = {"Authorization": malformed_token}
-        
+
         response = await test_client.get(self.url, headers=headers)
 
         assert response.status_code == HTTPStatus.UNAUTHORIZED

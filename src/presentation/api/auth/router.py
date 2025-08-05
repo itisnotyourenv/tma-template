@@ -1,9 +1,9 @@
 import logging
 
-from dishka.integrations.litestar import inject, FromDishka
+from dishka.integrations.litestar import FromDishka, inject
 from litestar import Router, post
 
-from src.application.auth.tg import AuthTgInteractor, AuthTgInputDTO
+from src.application.auth.tg import AuthTgInputDTO, AuthTgInteractor
 from src.presentation.api.auth.schemas import AuthTgRequest
 
 logger = logging.getLogger(__name__)

@@ -1,6 +1,6 @@
 import logging
 
-from dishka.integrations.litestar import inject, FromDishka
+from dishka.integrations.litestar import FromDishka, inject
 from litestar import Router, get
 from litestar.exceptions import NotFoundException
 

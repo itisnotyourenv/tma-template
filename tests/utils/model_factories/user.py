@@ -1,7 +1,7 @@
-from typing import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
-import pytest
 import factory
+import pytest
 
 from src.infrastructure.db.models import UserModel
 
@@ -21,7 +21,7 @@ class UserModelFactory(BaseFactory):
 
 @pytest.fixture(scope="function")
 def patch_user_session(native_db_session):
-    UserModelFactory._meta.sqlalchemy_session = native_db_session  # noqa: SLF001 # type: ignore
+    UserModelFactory._meta.sqlalchemy_session = native_db_session  # type: ignore
 
 
 @pytest.fixture(scope="function")
@@ -30,6 +30,7 @@ async def create_user(patch_user_session) -> Callable[..., Awaitable[UserModel]]
         return await create_entity(UserModelFactory, **kwargs)
 
     return _create
+
 
 @pytest.fixture(scope="function")
 async def test_user(

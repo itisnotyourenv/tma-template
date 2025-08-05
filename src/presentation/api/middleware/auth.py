@@ -1,5 +1,5 @@
 import logging
-from typing import Sequence
+from collections.abc import Sequence
 
 from litestar.connection import ASGIConnection
 from litestar.datastructures import Headers
@@ -9,8 +9,6 @@ from litestar.types import ASGIApp, Method, Scopes
 
 from src.application.common.exceptions import ValidationError
 from src.application.interfaces.auth import AuthService
-from src.infrastructure.auth import AuthServiceImpl
-from src.infrastructure.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +66,7 @@ class AuthMiddleware(AbstractAuthenticationMiddleware):
 
         except ValidationError as e:
             # Invalid or expired token
-            raise NotAuthorizedException(detail=str(e))
+            raise NotAuthorizedException(detail=str(e)) from e
 
     @staticmethod
     def _extract_bearer_token(headers: Headers) -> str | None:

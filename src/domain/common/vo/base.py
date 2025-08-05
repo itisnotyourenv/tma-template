@@ -1,10 +1,7 @@
 from abc import abstractmethod
-from typing import Generic, TypeVar
-
-T = TypeVar("T")
 
 
-class BaseValueObject(Generic[T]):
+class BaseValueObject[T]:
     __slots__ = ("_value",)
 
     def __init__(self, value: T) -> None:

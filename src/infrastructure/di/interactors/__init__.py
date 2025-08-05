@@ -1,6 +1,5 @@
 from .auth import AuthInteractorProvider
 
-
 interactor_providers = [
     AuthInteractorProvider,
 ]

@@ -6,8 +6,8 @@ from sqlalchemy import create_engine, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from src.infrastructure.config import load_config
-from src.infrastructure.db.models import base
 from src.infrastructure.db import models  # noqa: F401
+from src.infrastructure.db.models import base
 
 config = context.config
 

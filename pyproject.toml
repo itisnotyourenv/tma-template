@@ -14,16 +14,138 @@ dependencies = [
     "litestar>=2.16.0",
     "pydantic>=2.11.7",
     "pytest-asyncio>=1.1.0",
+    "pytest-cov>=6.0.0",
     "pytest>=8.4.1",
     "python-jose~=3.4.0",
     "pyyaml>=6.0.2",
+    "pre-commit>=4.0.1",
     "ruff>=0.12.5",
     "sqlalchemy>=2.0.41",
     "ty>=0.0.1a16",
     "uvicorn>=0.35.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.9.0",
+]
+
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
+
+[tool.ruff]
+# Python version compatibility
+target-version = "py313"
+
+# Line length configuration
+line-length = 88
+indent-width = 4
+
+# Enable specific rule sets for comprehensive code quality
+lint.select = [
+    # Pyflakes
+    "F",     # Pyflakes rules for logical errors
+    
+    # pycodestyle
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    
+    # isort
+    "I",     # Import sorting and organization
+    
+    # pep8-naming
+    "N",     # PEP 8 naming conventions
+    
+    # pyupgrade
+    "UP",    # Modern Python syntax upgrades
+    
+    # flake8-bugbear
+    "B",     # Common bugs and design problems
+    
+    # flake8-simplify
+    "SIM",   # Code simplification suggestions
+    
+    # flake8-comprehensions
+    "C4",    # List/dict/set comprehension improvements
+    
+    # bandit (security)
+    "S",     # Security vulnerability detection
+    
+    # flake8-annotations
+    "ANN",   # Type annotation enforcement
+    
+    # flake8-async
+    "ASYNC", # Async/await usage best practices
+    
+    # flake8-logging-format
+    "G",     # Logging format and best practices
+    
+    # Pylint
+    "PL",    # Pylint rules for code quality
+    
+    # Ruff-specific rules
+    "RUF",   # Ruff-specific improvements
+]
+
+# Ignore specific rules that might be too strict for this project
+lint.ignore = [
+    # Line length (handled by formatter)
+    "E501",    # Line too long
+    
+    # Type annotation rules (gradually implement)
+    "ANN204",  # Missing return type annotation for special method
+    
+    # Security rules for development/testing
+    "S101",    # Use of `assert` detected (common in tests)
+    "S311",    # Standard pseudo-random generators are not suitable for cryptographic purposes
+    
+    # Pylint rules that might be too aggressive
+    "PLR0913", # Too many arguments to function call
+    "PLR2004", # Magic value used in comparison
+    
+    # Documentation rules (can be enabled later)
+    "D",       # pydocstyle rules
+]
+
+# Per-file ignores for specific patterns
+[tool.ruff.lint.per-file-ignores]
+# Test files
+"tests/*" = ["S101", "S105", "S106", "ANN", "PLR2004", "SIM117"]
+# Migration files
+"**/migrations/*" = ["ANN", "N806"]
+# Configuration files
+"**/config/*" = ["S105", "S106"]
+# Init files
+"__init__.py" = ["F401"]
+
+# Configure import sorting
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+split-on-trailing-comma = true
+
+# Formatter configuration
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+# Additional linting configuration
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+multiline-quotes = "double"
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+suppress-dummy-args = true
+
+[tool.ruff.lint.pylint]
+max-locals = 15
+max-branches = 12
+max-statements = 50

@@ -1,5 +1,4 @@
-from collections.abc import Callable
-from typing import AsyncGenerator, AsyncIterator
+from collections.abc import AsyncGenerator, AsyncIterator, Callable
 
 import httpx
 import pytest
@@ -7,21 +6,21 @@ from dishka import AsyncContainer, make_async_container
 from dishka.integrations.litestar import setup_dishka
 from httpx import AsyncClient
 from litestar import Litestar
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
-    AsyncSession,
     AsyncEngine,
+    AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy import text
 
 from src.domain.user.vo import UserId
 from src.infrastructure.config import Config
 from src.infrastructure.db.models.base import BaseORMModel
 from src.infrastructure.di import (
-    interactor_providers,
     AuthProvider,
     DBProvider,
+    interactor_providers,
 )
 from src.presentation.api.app import prepare_app
 
@@ -62,6 +61,7 @@ def create_authenticated_client(
 
     return _create_authenticated_client
 
+
 @pytest.fixture
 def authenticated_client(create_authenticated_client) -> tuple[AsyncClient, UserId]:
     """Set up test client with authentication headers."""
@@ -72,7 +72,7 @@ def authenticated_client(create_authenticated_client) -> tuple[AsyncClient, User
 async def dishka_container_for_tests(
     test_config: Config,
     sqlalchemy_engine: AsyncEngine,
-) -> AsyncGenerator[AsyncContainer, None]:
+) -> AsyncGenerator[AsyncContainer]:
     await clear_db_data(sqlalchemy_engine)
 
     interactor_provider_instances = [
@@ -90,11 +90,12 @@ async def dishka_container_for_tests(
 
 
 @pytest.fixture(scope="session")
-async def sqlalchemy_engine(test_config: Config) -> AsyncGenerator[AsyncEngine, None]:
+async def sqlalchemy_engine(test_config: Config) -> AsyncGenerator[AsyncEngine]:
     engine = create_async_engine(test_config.postgres.url, echo=False)
     await setup_db_schema(engine)
     yield engine
     await engine.dispose(close=True)
+
 
 async def setup_db_schema(sqlalchemy_engine: AsyncEngine) -> None:
     """Create database schema once per session."""
@@ -107,15 +108,17 @@ async def clear_db_data(sqlalchemy_engine: AsyncEngine) -> None:
     async with sqlalchemy_engine.begin() as conn:
         # Get all table names from metadata
         tables = list(BaseORMModel.metadata.tables.keys())
-        
+
         if tables:
             # Disable foreign key checks for faster truncation
             await conn.execute(text("SET session_replication_role = replica;"))
-            
+
             # Truncate all tables
             for table in tables:
-                await conn.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE;"))
-            
+                await conn.execute(
+                    text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE;")
+                )
+
             # Re-enable foreign key checks
             await conn.execute(text("SET session_replication_role = DEFAULT;"))
 
@@ -123,14 +126,16 @@ async def clear_db_data(sqlalchemy_engine: AsyncEngine) -> None:
 @pytest.fixture(scope="function")
 async def db_session(
     dishka_container_for_tests: AsyncContainer,
-) -> AsyncGenerator[AsyncSession, None]:
+) -> AsyncGenerator[AsyncSession]:
     async with dishka_container_for_tests() as container:
         session = await container.get(AsyncSession)
         yield session
 
 
 @pytest.fixture(scope="session")
-def async_session_maker(sqlalchemy_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+def async_session_maker(
+    sqlalchemy_engine: AsyncEngine,
+) -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(sqlalchemy_engine, expire_on_commit=False)
 
 

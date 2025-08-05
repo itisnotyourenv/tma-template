@@ -1,9 +1,8 @@
 from .entity import User
-from .repository import UserRepository, CreateUserDTO
-
+from .repository import CreateUserDTO, UserRepository
 
 __all__ = [
-    "User",
     "CreateUserDTO",
+    "User",
     "UserRepository",
 ]
