@@ -7,6 +7,7 @@ from src.domain.user import (
     CreateUserDTO,
     UserRepository,
 )
+from src.domain.user.vo import UserId
 
 
 @dataclass
@@ -33,7 +34,7 @@ class AuthTgInteractor(Interactor[AuthTgInputDTO, AuthTgOutputDTO]):
     async def __call__(self, data: AuthTgInputDTO) -> AuthTgOutputDTO:
         parsed_data = self.auth_service.validate_init_data(data.init_data)
 
-        user = await self.user_repository.get_user(parsed_data.user_id, by="id")
+        user = await self.user_repository.get_user(UserId(parsed_data.user_id))
         if user is None:
             await self.user_repository.create_user(
                 CreateUserDTO(

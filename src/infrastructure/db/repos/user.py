@@ -1,19 +1,18 @@
-from typing import Literal, Unpack
+from typing import Unpack
 
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from src.domain.user.entity import User
 from src.domain.user.repository import CreateUserDTO, UpdateUserDTO, UserRepository
+from src.domain.user.vo import UserId, Username
 from src.infrastructure.db.models.user import UserModel
 from src.infrastructure.db.repos.base import BaseSQLAlchemyRepo
 
 
 class UserRepositoryImpl(UserRepository, BaseSQLAlchemyRepo):
-    async def get_user(
-        self, identifier: str, by: Literal["id", "username"] = "id"
-    ) -> User | None:
-        if by == "id":
+    async def get_user(self, identifier: UserId | Username) -> User | None:
+        if isinstance(identifier, UserId):
             stmt = select(UserModel).where(UserModel.id == identifier)
         else:  # by == "username"
             stmt = select(UserModel).where(UserModel.username == identifier)
@@ -40,7 +39,9 @@ class UserRepositoryImpl(UserRepository, BaseSQLAlchemyRepo):
         orm_model = result.scalar_one()
         return orm_model.to_domain()
 
-    async def update_user(self, user_id: int, **fields: Unpack[UpdateUserDTO]) -> User:
+    async def update_user(
+        self, user_id: UserId, **fields: Unpack[UpdateUserDTO]
+    ) -> User:
         stmt = (
             update(UserModel)
             .values(
@@ -54,3 +55,6 @@ class UserRepositoryImpl(UserRepository, BaseSQLAlchemyRepo):
         result = await self._session.execute(stmt)
         orm_model = result.scalar_one()
         return orm_model.to_domain()
+
+    async def delete_user(self, user_id: UserId) -> None:
+        raise NotImplementedError

@@ -22,7 +22,8 @@ async def get_user_profile(
 
     Requires valid JWT token in Authorization header.
     """
-    user = await user_repository.get_user(user_id.value, by="id")
+    # todo - refactor, use Interactor
+    user = await user_repository.get_user(user_id)
 
     if user is None:
         raise NotFoundException("User not found")

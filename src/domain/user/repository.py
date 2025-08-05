@@ -1,7 +1,8 @@
 from abc import abstractmethod
-from typing import Literal, Protocol, TypedDict, Unpack, overload
+from typing import Protocol, TypedDict, Unpack, overload
 
 from src.domain.user.entity import User
+from src.domain.user.vo import UserId, Username
 
 
 class CreateUserDTO(TypedDict):
@@ -22,22 +23,14 @@ class UpdateUserDTO(TypedDict):
 
 
 class UserRepository(Protocol):
-    # todo - fix type hints in get_user method
     @overload
-    async def get_user(self, identifier: str) -> User: ...
+    async def get_user(self, identifier: UserId) -> User | None: ...
 
     @overload
-    async def get_user(self, identifier: int, by: str = Literal["id"]) -> User: ...
-
-    @overload
-    async def get_user(
-        self, identifier: str, by: str = Literal["username"]
-    ) -> User: ...
+    async def get_user(self, identifier: Username) -> User | None: ...
 
     @abstractmethod
-    async def get_user(
-        self, identifier: int | str, by: Literal["id", "username"] = "id"
-    ) -> User | None:
+    async def get_user(self, identifier: UserId | Username) -> User | None:
         raise NotImplementedError
 
     @abstractmethod
@@ -45,7 +38,10 @@ class UserRepository(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def update_user(self, user_id: int, **fields: Unpack[UpdateUserDTO]) -> User:
+    async def update_user(
+        self, user_id: UserId, **fields: Unpack[UpdateUserDTO]
+    ) -> User:
         raise NotImplementedError
 
-    async def delete_user(self, user_id: str) -> None: ...
+    @abstractmethod
+    async def delete_user(self, user_id: UserId) -> None: ...
