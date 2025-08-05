@@ -1,14 +1,5 @@
-from pydantic import BaseModel
+from src.application.user.get_me import GetUserProfileOutputDTO
+from src.presentation.api.base.schemas import BaseResponseDTO
 
 
-class UserProfileResponse(BaseModel):
-    """User profile response schema."""
-
-    id: int
-    first_name: str
-    last_name: str | None = None
-    username: str | None = None
-    bio: str | None = None
-
-    class Config:
-        from_attributes = True
+class UserProfileResponseSchema(BaseResponseDTO[GetUserProfileOutputDTO]): ...
