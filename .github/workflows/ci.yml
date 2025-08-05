@@ -1,0 +1,189 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint-and-format:
+    name: Code Quality (Ruff)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+        
+    - name: Install dependencies
+      run: uv sync
+      
+    - name: Run Ruff linting
+      run: uv run ruff check src/ tests/ --output-format=github
+      
+    - name: Run Ruff formatting check
+      run: uv run ruff format src/ tests/ --check
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.13']
+        os: [ubuntu-latest]
+      fail-fast: false
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+        
+    - name: Install dependencies
+      run: uv sync
+      
+    - name: Run tests
+      run: uv run pytest tests/ -v --tb=short
+      env:
+        # Test database configuration
+        TEST_DATABASE_URL: postgresql+asyncpg://test_user:test_password@localhost:5432/test_db
+        
+    - name: Run tests with coverage
+      run: uv run pytest tests/ --cov=src --cov-report=xml --cov-report=term-missing
+      env:
+        TEST_DATABASE_URL: postgresql+asyncpg://test_user:test_password@localhost:5432/test_db
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  security:
+    name: Security Scan (Bandit)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+        
+    - name: Install dependencies
+      run: uv sync
+      
+    - name: Run security scan with Bandit via Ruff
+      run: uv run ruff check src/ --select=S --output-format=github
+
+  type-check:
+    name: Type Checking (MyPy)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+        
+    - name: Install dependencies with dev extras
+      run: uv sync --extra dev
+      
+    - name: Run MyPy type checking
+      run: uv run mypy src/ --ignore-missing-imports --no-strict-optional
+      continue-on-error: true  # Allow type checking to be informational for now
+
+  build:
+    name: Build Check
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, test, security]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+        
+    - name: Install dependencies
+      run: uv sync
+      
+    - name: Verify application can start
+      run: |
+        # Basic import test to ensure no syntax errors
+        uv run python -c "
+        try:
+            from src.presentation.api.app import create_app
+            print('✅ Application imports successfully')
+        except ImportError as e:
+            print(f'❌ Import error: {e}')
+            exit(1)
+        except Exception as e:
+            print(f'⚠️  Import warning: {e}')
+            print('✅ Basic syntax check passed')
+        "

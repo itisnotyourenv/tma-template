@@ -9,10 +9,13 @@ class BaseFactory(SQLAlchemyModelFactory):
     class Meta:
         model = None
 
+
 BaseSubclassT = TypeVar("BaseSubclassT", bound=type[BaseORMModel])
 
 
-async def create_entity(entity_factory: type[BaseFactory], use_cache: bool = False, **kwargs) -> BaseSubclassT:
+async def create_entity(
+    entity_factory: type[BaseFactory], use_cache: bool = False, **kwargs
+) -> BaseSubclassT:
     # Create new entity
     entity = entity_factory.create(**kwargs)
     await entity_factory._meta.sqlalchemy_session.commit()

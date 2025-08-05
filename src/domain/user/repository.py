@@ -1,5 +1,6 @@
 from abc import abstractmethod
-from typing import Literal, Protocol, overload, TypedDict, Unpack
+from typing import Literal, Protocol, TypedDict, Unpack, overload
+
 from src.domain.user.entity import User
 
 

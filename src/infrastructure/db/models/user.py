@@ -1,12 +1,10 @@
-from typing import Optional
-
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.domain.user.entity import User
-from src.domain.user.vo import UserId, FirstName, LastName, Username, Bio
+from src.domain.user.vo import Bio, FirstName, LastName, UserId, Username
 
 from .base import BaseORMModel
-from .types.user import UserIdType, FirstNameType, LastNameType, UsernameType, BioType
+from .types.user import BioType, FirstNameType, LastNameType, UserIdType, UsernameType
 
 
 class UserModel(BaseORMModel):
@@ -14,8 +12,8 @@ class UserModel(BaseORMModel):
 
     id: Mapped[UserId] = mapped_column(UserIdType, primary_key=True)
     first_name: Mapped[FirstName] = mapped_column(FirstNameType)
-    last_name: Mapped[Optional[LastName]] = mapped_column(LastNameType, nullable=True)
-    username: Mapped[Optional[Username]] = mapped_column(
+    last_name: Mapped[LastName | None] = mapped_column(LastNameType, nullable=True)
+    username: Mapped[Username | None] = mapped_column(
         UsernameType, nullable=True, unique=False
     )
     bio: Mapped[Bio | None] = mapped_column(BioType, nullable=True)

@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 from aiogram.utils.web_app import safe_parse_webapp_init_data
 from jose import ExpiredSignatureError, JWTError
-from jose.jwt import encode, decode
+from jose.jwt import decode, encode
 
 from src.application.auth.exceptions import InvalidInitDataError
 from src.application.common.exceptions import ValidationError
@@ -20,9 +20,9 @@ class AuthServiceImpl(AuthService):
             parsed_data = safe_parse_webapp_init_data(
                 self.config.telegram.bot_token, init_data
             )
-        except ValueError:
+        except ValueError as err:
             error_msg = f"Invalid init data '{init_data}'"
-            raise InvalidInitDataError(message=error_msg)
+            raise InvalidInitDataError(message=error_msg) from err
 
         if parsed_data.user is None or parsed_data.user.photo_url is None:
             error_msg = f"Invalid init data '{init_data}'"
@@ -69,9 +69,9 @@ class AuthServiceImpl(AuthService):
                 raise ValidationError("Token missing subject")
 
             return int(user_id_str)
-        except ExpiredSignatureError:
-            raise ValidationError("Token has expired")
-        except JWTError:
-            raise ValidationError("Invalid token")
-        except (ValueError, TypeError):
-            raise ValidationError("Invalid user ID in token")
+        except ExpiredSignatureError as err:
+            raise ValidationError("Token has expired") from err
+        except JWTError as err:
+            raise ValidationError("Invalid token") from err
+        except (ValueError, TypeError) as err:
+            raise ValidationError("Invalid user ID in token") from err

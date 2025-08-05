@@ -2,7 +2,7 @@ from httpx import AsyncClient
 
 
 class TestHealth:
-    url = 'health'
+    url = "health"
 
     async def test_get_health_success(self, test_client: AsyncClient):
         response = await test_client.get(
