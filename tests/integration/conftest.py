@@ -1,3 +1,4 @@
+import os
 from collections.abc import AsyncGenerator, AsyncIterator, Callable
 
 import httpx
@@ -23,6 +24,69 @@ from src.infrastructure.di import (
     interactor_providers,
 )
 from src.presentation.api.app import prepare_app
+
+
+def get_worker_database_url(base_url: str) -> str:
+    """Generate worker-specific database URL for parallel test execution."""
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER", "master")
+
+    # Parse the base URL to extract components
+    if "://" not in base_url:
+        raise ValueError(f"Invalid database URL format: {base_url}")
+
+    protocol, rest = base_url.split("://", 1)
+
+    # Split the rest into user:password@host:port/database
+    if "@" in rest:
+        auth_part, host_db_part = rest.rsplit("@", 1)
+    else:
+        auth_part = ""
+        host_db_part = rest
+
+    if "/" in host_db_part:
+        host_port, database = host_db_part.rsplit("/", 1)
+    else:
+        host_port = host_db_part
+        database = ""
+
+    # Create worker-specific database name
+    worker_db = database if worker_id == "master" else f"{database}_{worker_id}"
+
+    # Reconstruct the URL
+    if auth_part:
+        return f"{protocol}://{auth_part}@{host_port}/{worker_db}"
+    else:
+        return f"{protocol}://{host_port}/{worker_db}"
+
+
+async def create_worker_database(base_url: str, worker_url: str) -> None:
+    """Create worker-specific database if it doesn't exist."""
+    if base_url == worker_url:
+        # Master worker uses the original database, no need to create
+        return
+
+    # Extract database name from worker URL
+    worker_db_name = worker_url.split("/")[-1]
+
+    # Create engine connected to the main database to create worker database
+    main_db_url = base_url.rsplit("/", 1)[0] + "/postgres"  # Connect to postgres db
+    main_engine = create_async_engine(
+        main_db_url, echo=False, isolation_level="AUTOCOMMIT"
+    )
+
+    try:
+        async with main_engine.connect() as conn:
+            # Check if database exists
+            result = await conn.execute(
+                text("SELECT 1 FROM pg_database WHERE datname = :db_name"),
+                {"db_name": worker_db_name},
+            )
+
+            if not result.fetchone():
+                # Create the worker database
+                await conn.execute(text(f'CREATE DATABASE "{worker_db_name}"'))
+    finally:
+        await main_engine.dispose()
 
 
 @pytest.fixture(scope="session")
@@ -75,15 +139,25 @@ async def dishka_container_for_tests(
 ) -> AsyncGenerator[AsyncContainer]:
     await clear_db_data(sqlalchemy_engine)
 
+    # Create worker-specific config for database isolation
+    worker_db_url = get_worker_database_url(test_config.postgres.url)
+    worker_db_name = worker_db_url.split("/")[-1]
+
+    # Create a modified postgres config with worker-specific database name
+    worker_postgres_config = test_config.postgres.model_copy(
+        update={"db": worker_db_name}
+    )
+    worker_config = test_config.model_copy(update={"postgres": worker_postgres_config})
+
     interactor_provider_instances = [
         interactor() for interactor in interactor_providers
     ]
 
     container = make_async_container(
         AuthProvider(),
-        DBProvider(test_config.postgres),  # todo - pass config with context
+        DBProvider(worker_postgres_config),
         *interactor_provider_instances,
-        context={Config: test_config},
+        context={Config: worker_config},
     )
     yield container
     await container.close()
@@ -91,8 +165,18 @@ async def dishka_container_for_tests(
 
 @pytest.fixture(scope="session")
 async def sqlalchemy_engine(test_config: Config) -> AsyncGenerator[AsyncEngine]:
-    engine = create_async_engine(test_config.postgres.url, echo=False)
+    # Get worker-specific database URL
+    worker_db_url = get_worker_database_url(test_config.postgres.url)
+
+    # Create engine with worker-specific database
+    engine = create_async_engine(worker_db_url, echo=False)
+
+    # Create the worker-specific database if it doesn't exist
+    await create_worker_database(test_config.postgres.url, worker_db_url)
+
+    # Set up schema in the worker database
     await setup_db_schema(engine)
+
     yield engine
     await engine.dispose(close=True)
 
