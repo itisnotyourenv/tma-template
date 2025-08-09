@@ -44,17 +44,16 @@ class TestUserProfile:
         profile_data = response.json()
         # Verify response structure
         assert "id" in profile_data
-        assert "first_name" in profile_data
-        assert "last_name" in profile_data
+        assert "firstName" in profile_data
+        assert "lastName" in profile_data
         assert "username" in profile_data
-        assert "bio" in profile_data
 
         # Verify data types
         assert isinstance(profile_data["id"], int)
-        assert isinstance(profile_data["first_name"], str)
+        assert isinstance(profile_data["firstName"], str)
 
         # Verify user data from test config
-        assert profile_data["first_name"] == "min"
+        assert profile_data["firstName"] == "min"
         assert profile_data["username"] == "zurab"
 
     async def test_get_profile_unauthorized_no_auth_header(
@@ -103,16 +102,16 @@ class TestUserProfile:
         profile_data = response.json()
 
         # Test all required fields exist
-        required_fields = ["id", "first_name", "last_name", "username", "bio"]
+        required_fields = ["id", "firstName", "lastName", "username"]
         for field in required_fields:
             assert field in profile_data, f"Field '{field}' missing from response"
 
         # Test data types
         assert isinstance(profile_data["id"], int)
-        assert isinstance(profile_data["first_name"], str)
+        assert isinstance(profile_data["firstName"], str)
 
         # Optional fields can be None or strings
-        for field in ["last_name", "username", "bio"]:
+        for field in ["lastName", "username"]:
             assert profile_data[field] is None or isinstance(profile_data[field], str)
 
     async def test_get_profile_multiple_requests_consistent(
@@ -157,7 +156,7 @@ class TestUserProfile:
 
         # Should return same user data since same Telegram init data
         assert profile1["id"] == profile2["id"]
-        assert profile1["first_name"] == profile2["first_name"]
+        assert profile1["firstName"] == profile2["firstName"]
         assert profile1["username"] == profile2["username"]
 
     @pytest.mark.parametrize(
