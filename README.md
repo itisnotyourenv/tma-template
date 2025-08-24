@@ -2,41 +2,49 @@
 
 ## 1. Prepare files
 
-### 1. Copy `config-example.yaml` to `config-local.yaml`
+#### 1.1 Copy `config-example.yaml` to `config-local.yaml` (for tests)
 ```shell
 cp config-example.yaml config-local.yaml
 ```
 
-### 2. Paste BOT Token and init-data from your BOT to the `config-local.yaml`
+#### 1.2. Copy `config-example.yaml` to `config.yaml` (for production and development)
+```shell
+cp config-example.yaml config.yaml
+```
+
+#### 1.3. Paste BOT Token and init-data from your BOT to the `config-local.yaml`
 
 ## 2. Setup UV for this project
 
-### 1. Create a virtual environment
+#### 2.1. Create a virtual environment
 ```shell
 uv venv
 ```
 
-### 2. Install dependencies from `pyproject.toml`
+#### 2.2. Install dependencies from `pyproject.toml`
 ```shell
 uv sync
 ```
 
 
 ## 3. Ensure everything works
-### 1 Run tests
-
-With Just
-```shell
-just test
-```
-
-With shell command
+#### 3.1 Run tests
 ```shell
 docker compose -f docker-compose-test.yml up --build -d
 pytest
 docker compose -f docker-compose-test.yml down -v
 ```
 
+## 4 Run Litestar APP & Bot
+#### 4.1 Run Litestar APP
+```shell
+uvicorn src.presentation.api.app:create_app --host 0.0.0.0 --port 8080
+```
+
+#### 4.2 Run Telegram Bot 
+```shell
+python -m src.presentation.bot.main
+```
 
 # Setup Pre-Commit
 ### 1. Initialize pre-commit
