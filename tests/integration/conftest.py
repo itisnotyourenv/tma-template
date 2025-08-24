@@ -132,7 +132,7 @@ def authenticated_client(create_authenticated_client) -> tuple[AsyncClient, User
     return create_authenticated_client(1)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 async def dishka_container_for_tests(
     test_config: Config,
     sqlalchemy_engine: AsyncEngine,
