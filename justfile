@@ -53,5 +53,9 @@ test:
     pytest -n auto -ss -vv --maxfail=1
     docker compose -f docker-compose-test.yml down -v
 
-just test-db-up:
+test-db-up:
     docker compose -f docker-compose-test.yml up --build -d
+
+lint:
+    ruff format src tests
+    ruff check src tests --fix

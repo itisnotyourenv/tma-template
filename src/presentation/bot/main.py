@@ -7,15 +7,18 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
 from aiogram.types import Message
+from dishka import make_async_container
+from dishka.integrations.aiogram import FromDishka, inject, setup_dishka
 
-from src.infrastructure.config import load_config
-
+from src.infrastructure.config import Config, load_config
+from src.infrastructure.di import AuthProvider, DBProvider, interactor_providers
 
 dp = Dispatcher()
 
 
 @dp.message(CommandStart())
-async def command_start_handler(message: Message) -> None:
+@inject
+async def command_start_handler(message: Message, interactor: FromDishka()) -> None:
     """
     This handler receives messages with `/start` command
     """
@@ -45,7 +48,22 @@ async def echo_handler(message: Message) -> None:
 async def main() -> None:
     config = load_config()
     # Initialize Bot instance with default bot properties which will be passed to all API calls
-    bot = Bot(token=config.telegram.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    bot = Bot(
+        token=config.telegram.bot_token,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
+
+    interactor_provider_instances = [
+        interactor() for interactor in interactor_providers
+    ]
+
+    container = make_async_container(
+        AuthProvider(),
+        DBProvider(config.postgres),  # todo - pass config with context
+        *interactor_provider_instances,
+        context={Config: config},
+    )
+    setup_dishka(container=container, router=dp)
 
     # And the run events dispatching
     await dp.start_polling(bot)
