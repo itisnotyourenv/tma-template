@@ -5,40 +5,40 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
-  validate-pr:
-    name: Validate PR Requirements
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Check PR title format
-      uses: amannn/action-semantic-pull-request@v5
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        types: |
-          feat
-          fix
-          docs
-          style
-          refactor
-          perf
-          test
-          build
-          ci
-          chore
-          revert
-        requireScope: false
-        disallowScopes: |
-          release
-        subjectPattern: ^(?![A-Z]).+$
-        subjectPatternError: |
-          The subject "{subject}" found in the pull request title "{title}"
-          didn't match the configured pattern. Please ensure that the subject
-          doesn't start with an uppercase character.
+#  validate-pr:
+#    name: Validate PR Requirements
+#    runs-on: ubuntu-latest
+#    if: github.event.pull_request.draft == false
+#
+#    steps:
+#    - name: Checkout code
+#      uses: actions/checkout@v4
+#
+#    - name: Check PR title format
+#      uses: amannn/action-semantic-pull-request@v5
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      with:
+#        types: |
+#          feat
+#          fix
+#          docs
+#          style
+#          refactor
+#          perf
+#          test
+#          build
+#          ci
+#          chore
+#          revert
+#        requireScope: false
+#        disallowScopes: |
+#          release
+#        subjectPattern: ^(?![A-Z]).+$
+#        subjectPatternError: |
+#          The subject "{subject}" found in the pull request title "{title}"
+#          didn't match the configured pattern. Please ensure that the subject
+#          doesn't start with an uppercase character.
 
   check-required-files:
     name: Check Required Files

@@ -53,8 +53,8 @@ class TestUserProfile:
         assert isinstance(profile_data["firstName"], str)
 
         # Verify user data from test config
-        assert profile_data["firstName"] == "min"
-        assert profile_data["username"] == "zurab"
+        assert profile_data["firstName"] == "xin"
+        assert profile_data["username"] == "pvnimaxin"
 
     async def test_get_profile_unauthorized_no_auth_header(
         self,
