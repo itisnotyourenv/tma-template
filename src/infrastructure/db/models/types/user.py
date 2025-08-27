@@ -1,10 +1,10 @@
-from sqlalchemy import Dialect, Integer, String, TypeDecorator
+from sqlalchemy import BIGINT, Dialect, String, TypeDecorator
 
 from src.domain.user.vo import Bio, FirstName, LastName, UserId, Username
 
 
 class UserIdType(TypeDecorator):
-    impl = Integer
+    impl = BIGINT
     cache_ok = True
 
     def process_bind_param(

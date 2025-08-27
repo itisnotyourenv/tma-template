@@ -75,3 +75,12 @@ class AuthServiceImpl(AuthService):
             raise ValidationError("Invalid token") from err
         except (ValueError, TypeError) as err:
             raise ValidationError("Invalid user ID in token") from err
+
+
+if __name__ == "__main__":
+    from src.infrastructure.config import load_config
+
+    config = load_config(file_name="new-config.yaml")
+
+    auth_service = AuthServiceImpl(config)
+    auth_service.validate_init_data(init_data=config.telegram.tg_init_data)
