@@ -24,6 +24,9 @@ dependencies = [
     "sqlalchemy>=2.0.41",
     "ty>=0.0.1a16",
     "uvicorn>=0.35.0",
+    "pytest-timeout>=2.4.0",
+    "pytest-sugar>=1.1.1",
+    "pytest-randomly>=3.16.0",
 ]
 
 [project.optional-dependencies]
@@ -37,10 +40,33 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope ="session"
 # Parallel execution available with: pytest -n auto --dist worksteal
-# addopts = [
-#     "-n", "auto",
-#     "--dist", "worksteal",
-# ]
+addopts = [
+    # Output / display
+    "-ra",              # show extra test summary info (skipped/xfail/etc.)
+    "-q",               # less verbose output (combine with -vv for detail where needed)
+    "-vv",              # more detailed test logs (esp. useful with -s)
+    "-s",               # disable output capturing (so print() works)
+    "--color=yes",      # always force colored output
+
+    # Safety / speed
+    "--maxfail=1",      # stop after first failure
+    "-n", "auto",       # run tests in parallel using all CPUs
+    "--dist=worksteal", # better balancing across workers
+
+    # Coverage
+    "--cov=src",
+    "--cov-report=xml",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--cov-fail-under=90",
+
+    "--disable-warnings",  # suppress pytest warning spam (still logged)
+    "--tb=short",          # shorter tracebacks (can switch to 'line' or 'auto')
+
+    "--randomly-seed=42",  # pytest-randomly
+    "--timeout=30",        # pytest-timeout
+    "--strict-markers"
+]
 
 [tool.ruff]
 # Python version compatibility
