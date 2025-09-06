@@ -120,7 +120,9 @@ class TestCreateUserInteractor:
         sample_user_no_optional,
     ):
         mock_user_repository.get_user = AsyncMock(return_value=None)
-        mock_user_repository.create_user = AsyncMock(return_value=sample_user_no_optional)
+        mock_user_repository.create_user = AsyncMock(
+            return_value=sample_user_no_optional
+        )
         mock_transaction_manager.commit = AsyncMock()
 
         result = await interactor(sample_create_user_input_dto_no_optional)
@@ -151,9 +153,17 @@ class TestCreateUserInteractor:
 
         assert isinstance(result, CreateUserOutputDTO)
         assert result.id == sample_user.id.value
-        assert result.username == sample_user.username.value if sample_user.username else None
+        assert (
+            result.username == sample_user.username.value
+            if sample_user.username
+            else None
+        )
         assert result.first_name == sample_user.first_name.value
-        assert result.last_name == sample_user.last_name.value if sample_user.last_name else None
+        assert (
+            result.last_name == sample_user.last_name.value
+            if sample_user.last_name
+            else None
+        )
 
         mock_user_repository.get_user.assert_awaited_once_with(UserId(456))
         mock_user_repository.create_user.assert_not_called()
@@ -177,7 +187,9 @@ class TestCreateUserInteractor:
         sample_user_no_optional,
     ):
         mock_user_repository.get_user = AsyncMock(return_value=sample_user_no_optional)
-        mock_user_repository.update_user = AsyncMock(return_value=sample_user_no_optional)
+        mock_user_repository.update_user = AsyncMock(
+            return_value=sample_user_no_optional
+        )
         mock_transaction_manager.commit = AsyncMock()
 
         result = await interactor(sample_create_user_input_dto_no_optional)

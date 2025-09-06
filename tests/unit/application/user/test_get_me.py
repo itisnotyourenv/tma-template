@@ -27,9 +27,7 @@ class TestGetUserProfileInteractor:
 
     @pytest.fixture
     def sample_input_dto(self) -> GetUserProfileInputDTO:
-        return GetUserProfileInputDTO(
-            user_id=UserId(456)
-        )
+        return GetUserProfileInputDTO(user_id=UserId(456))
 
     @pytest.fixture
     def sample_user_with_all_fields(self) -> User:
@@ -58,7 +56,9 @@ class TestGetUserProfileInteractor:
         sample_input_dto,
         sample_user_with_all_fields,
     ):
-        mock_user_repository.get_user = AsyncMock(return_value=sample_user_with_all_fields)
+        mock_user_repository.get_user = AsyncMock(
+            return_value=sample_user_with_all_fields
+        )
 
         result = await interactor(sample_input_dto)
 
@@ -77,7 +77,9 @@ class TestGetUserProfileInteractor:
         sample_input_dto,
         sample_user_with_optional_none,
     ):
-        mock_user_repository.get_user = AsyncMock(return_value=sample_user_with_optional_none)
+        mock_user_repository.get_user = AsyncMock(
+            return_value=sample_user_with_optional_none
+        )
 
         result = await interactor(sample_input_dto)
 
@@ -126,7 +128,7 @@ class TestGetUserProfileInteractor:
         user_id_value,
     ):
         input_dto = GetUserProfileInputDTO(user_id=UserId(user_id_value))
-        
+
         user = User(
             id=UserId(user_id_value),
             username=Username("testuser"),
