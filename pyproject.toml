@@ -182,3 +182,8 @@ suppress-dummy-args = true
 max-locals = 15
 max-branches = 12
 max-statements = 50
+
+[tool.coverage.run]
+omit = [
+    "src/presentation/bot/main.py",
+]

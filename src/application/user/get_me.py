@@ -37,7 +37,7 @@ class GetUserProfileInteractor(
 
         return GetUserProfileOutputDTO(
             id=user.id.value,
-            username=user.username.value,
+            username=user.username.value if user.username else None,
             first_name=user.first_name.value,
-            last_name=user.last_name.value,
+            last_name=user.last_name.value if user.last_name else None,
         )
