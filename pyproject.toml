@@ -63,7 +63,7 @@ addopts = [
     "--disable-warnings",  # suppress pytest warning spam (still logged)
     "--tb=short",          # shorter tracebacks (can switch to 'line' or 'auto')
 
-#    "--randomly-seed=42",  # pytest-randomly
+    "--randomly-seed=42",  # pytest-randomly
     "--timeout=30",        # pytest-timeout
     "--strict-markers"
 ]
