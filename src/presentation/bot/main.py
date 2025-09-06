@@ -10,6 +10,7 @@ from aiogram.types import Message
 from dishka import make_async_container
 from dishka.integrations.aiogram import FromDishka, inject, setup_dishka
 
+from src.application.user.create import CreateUserInteractor, CreateUserInputDTO
 from src.infrastructure.config import Config, load_config
 from src.infrastructure.di import AuthProvider, DBProvider, interactor_providers
 
@@ -18,16 +19,21 @@ dp = Dispatcher()
 
 @dp.message(CommandStart())
 @inject
-async def command_start_handler(message: Message, interactor: FromDishka()) -> None:
+async def command_start_handler(message: Message, interactor: FromDishka[CreateUserInteractor]) -> None:
     """
     This handler receives messages with `/start` command
     """
-    # Most event objects have aliases for API methods that can be called in events' context
-    # For example if you want to answer to incoming message you can use `message.answer(...)` alias
-    # and the target chat will be passed to :ref:`aiogram.methods.send_message.SendMessage`
-    # method automatically or call API method directly via
-    # Bot instance: `bot.send_message(chat_id=message.chat.id, ...)`
-    await message.answer(f"Hello, {html.bold(message.from_user.full_name)}!")
+    user = await interactor(data=CreateUserInputDTO(
+        id=message.from_user.id,
+        username=message.from_user.username,
+        first_name=message.from_user.first_name,
+        last_name=message.from_user.last_name,
+        is_premium=message.from_user.is_premium,
+        photo_url=None,
+    ))
+
+    msg = f"Hello, {user.first_name}!"
+    await message.answer(text=msg)
 
 
 @dp.message()
