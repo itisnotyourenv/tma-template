@@ -1,4 +1,9 @@
-Please review PR #$ARGUMENTS and provide comprehensive feedback. Focus on:
+---
+description: Review a GitHub PR following a structured workflow
+argument-hint: <pr-number>
+---
+
+Review given PR and provide comprehensive feedback. Focus on:
 
 1. Code quality and adherence to our coding standards
 2. Potential bugs or edge cases that might have been missed
