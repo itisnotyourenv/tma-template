@@ -20,7 +20,7 @@ class UserInteractorProvider(Provider):
         )
 
     @provide
-    def provide_user_profile_interactor(
+    def provide_create_user_interactor(
         self,
         user_repository: UserRepository,
         transaction_manager: TransactionManager,
