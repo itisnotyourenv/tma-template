@@ -17,3 +17,4 @@ config-local.yaml
 
 .coverage
 coverage.xml
+.env
