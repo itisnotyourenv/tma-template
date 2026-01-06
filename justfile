@@ -48,6 +48,9 @@ status:
 api:
     uvicorn src.presentation.api.app:create_app --factory --port 8080 --reload
 
+bot:
+    python -m src.presentation.bot.main
+
 test:
     docker compose -f docker-compose-test.yml up -d
     pytest -n auto -ss -vv --maxfail=1
