@@ -1,5 +1,6 @@
 telegram:
   bot_token: "token"
+  admin_ids: [1,2,3,4]
 
 postgres:
   host: "localhost"

@@ -5,6 +5,7 @@ import sys
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramAPIError
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 from dishka import make_async_container
@@ -15,6 +16,15 @@ from src.infrastructure.config import Config, load_config
 from src.infrastructure.di import AuthProvider, DBProvider, interactor_providers
 
 dp = Dispatcher()
+
+
+async def notify_admins_on_startup(bot: Bot, config: Config) -> None:
+    """Send notification to admins when bot starts up."""
+    for admin_id in config.telegram.admin_ids:
+        try:
+            await bot.send_message(chat_id=admin_id, text="Bot has started!")
+        except TelegramAPIError as e:
+            logging.warning("Failed to notify admin %s: %s", admin_id, e)
 
 
 @dp.message(CommandStart())
@@ -74,6 +84,9 @@ async def main() -> None:
         context={Config: config},
     )
     setup_dishka(container=container, router=dp)
+
+    # Notify admins on startup
+    await notify_admins_on_startup(bot, config)
 
     # And the run events dispatching
     await dp.start_polling(bot)
