@@ -8,8 +8,8 @@ def setup_routers() -> Router:
     """Set up all bot routers."""
     main_router = Router()
 
-    # Command handlers first (highest priority)
     main_router.include_routers(
+        # Command handlers first (highest priority)
         commands_router,
         setup_admin_routers(),
     )
