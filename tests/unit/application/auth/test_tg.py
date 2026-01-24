@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -53,12 +54,16 @@ class TestAuthTgInteractor:
 
     @pytest.fixture
     def sample_user(self) -> User:
+        now = datetime.now(timezone.utc)
         return User(
             id=UserId(456),
             username=Username("username"),
             first_name=FirstName("Johhn"),
             last_name=LastName("Anderson"),
             bio=Bio("Hello, I'm a test user."),
+            created_at=now,
+            updated_at=now,
+            last_login_at=now,
         )
 
     async def test_auth_new_user_success(

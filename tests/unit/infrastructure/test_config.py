@@ -200,9 +200,13 @@ class TestAuthConfig:
 
 class TestTelegramConfig:
     def test_valid_config(self):
-        config = TelegramConfig(bot_token="123456789:ABCdefGHIjklMNOpqrsTUVwxyz")
+        config = TelegramConfig(
+            bot_token="123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+            admin_ids=[123456789],
+        )
 
         assert config.bot_token == "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+        assert config.admin_ids == [123456789]
 
     def test_missing_required_fields(self):
         with pytest.raises(ValidationError):
@@ -220,7 +224,7 @@ class TestTelegramConfig:
         ],
     )
     def test_bot_token_values(self, bot_token, expected):
-        config = TelegramConfig(bot_token=bot_token)
+        config = TelegramConfig(bot_token=bot_token, admin_ids=[123456789])
         assert config.bot_token == expected
 
 
@@ -235,7 +239,8 @@ class TestConfig:
             access_token_expire_minutes=30,
         )
         telegram_config = TelegramConfig(
-            bot_token="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+            bot_token="123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+            admin_ids=[123456789],
         )
 
         config = Config(
@@ -274,7 +279,7 @@ class TestLoadConfig:
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
-            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"},
+            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", "admin_ids": [123456789]},
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
@@ -312,7 +317,7 @@ class TestLoadConfig:
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
-            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"},
+            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", "admin_ids": [123456789]},
         }
 
         yaml_content = yaml.dump(config_data)
@@ -407,7 +412,7 @@ class TestLoadConfig:
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
-            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"},
+            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", "admin_ids": [123456789]},
             "extra_config": "ignored",
         }
 
@@ -437,7 +442,7 @@ class TestLoadConfig:
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
-            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"},
+            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", "admin_ids": [123456789]},
         }
 
         yaml_content = yaml.dump(config_data)
@@ -462,7 +467,7 @@ class TestLoadConfig:
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
-            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"},
+            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", "admin_ids": [123456789]},
         }
 
         yaml_content = yaml.dump(config_data)

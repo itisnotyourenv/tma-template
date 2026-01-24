@@ -1,3 +1,6 @@
+from datetime import datetime
+
+from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.domain.user.entity import User
@@ -17,6 +20,11 @@ class UserModel(BaseORMModel):
         UsernameType, nullable=True, unique=False
     )
     bio: Mapped[Bio | None] = mapped_column(BioType, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        server_default=func.now(), onupdate=func.now()
+    )
+    last_login_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     def to_domain(self) -> User:
         return User(
@@ -25,6 +33,9 @@ class UserModel(BaseORMModel):
             last_name=self.last_name,
             username=self.username,
             bio=self.bio,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+            last_login_at=self.last_login_at,
         )
 
     @classmethod
@@ -35,4 +46,7 @@ class UserModel(BaseORMModel):
             last_name=user.last_name,
             username=user.username,
             bio=user.bio,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+            last_login_at=user.last_login_at,
         )

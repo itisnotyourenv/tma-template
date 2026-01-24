@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -61,22 +62,30 @@ class TestCreateUserInteractor:
 
     @pytest.fixture
     def sample_user(self) -> User:
+        now = datetime.now(timezone.utc)
         return User(
             id=UserId(456),
             username=Username("testuser"),
             first_name=FirstName("John"),
             last_name=LastName("Doe"),
             bio=Bio("Test bio"),
+            created_at=now,
+            updated_at=now,
+            last_login_at=now,
         )
 
     @pytest.fixture
     def sample_user_no_optional(self) -> User:
+        now = datetime.now(timezone.utc)
         return User(
             id=UserId(789),
             username=None,
             first_name=FirstName("Jane"),
             last_name=None,
             bio=None,
+            created_at=now,
+            updated_at=now,
+            last_login_at=now,
         )
 
     async def test_create_new_user_success(
@@ -296,12 +305,16 @@ class TestCreateUserInteractor:
             photo_url="http://example.com/photo.jpg",
         )
 
+        now = datetime.now(timezone.utc)
         created_user = User(
             id=UserId(user_id_value),
             username=Username("testuser"),
             first_name=FirstName("Test"),
             last_name=LastName("User"),
             bio=None,
+            created_at=now,
+            updated_at=now,
+            last_login_at=now,
         )
 
         mock_user_repository.get_user = AsyncMock(return_value=None)
