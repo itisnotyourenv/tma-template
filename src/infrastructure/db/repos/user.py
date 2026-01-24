@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Unpack
 
 from sqlalchemy import select, update
@@ -44,11 +45,12 @@ class UserRepositoryImpl(UserRepository, BaseSQLAlchemyRepo):
     ) -> User:
         stmt = (
             update(UserModel)
+            .where(UserModel.id == user_id)
             .values(
-                id=user_id,
                 username=fields["username"],
                 first_name=fields["first_name"],
                 last_name=fields["last_name"],
+                last_login_at=datetime.now(timezone.utc),
             )
             .returning(UserModel)
         )
