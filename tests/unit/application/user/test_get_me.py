@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -31,22 +32,30 @@ class TestGetUserProfileInteractor:
 
     @pytest.fixture
     def sample_user_with_all_fields(self) -> User:
+        now = datetime.now(timezone.utc)
         return User(
             id=UserId(456),
             username=Username("testuser"),
             first_name=FirstName("John"),
             last_name=LastName("Doe"),
             bio=Bio("Test bio"),
+            created_at=now,
+            updated_at=now,
+            last_login_at=now,
         )
 
     @pytest.fixture
     def sample_user_with_optional_none(self) -> User:
+        now = datetime.now(timezone.utc)
         return User(
             id=UserId(456),
             username=None,
             first_name=FirstName("John"),
             last_name=None,
             bio=None,
+            created_at=now,
+            updated_at=now,
+            last_login_at=now,
         )
 
     async def test_get_user_profile_success_with_all_fields(
@@ -129,12 +138,16 @@ class TestGetUserProfileInteractor:
     ):
         input_dto = GetUserProfileInputDTO(user_id=UserId(user_id_value))
 
+        now = datetime.now(timezone.utc)
         user = User(
             id=UserId(user_id_value),
             username=Username("testuser"),
             first_name=FirstName("Test"),
             last_name=LastName("User"),
             bio=None,
+            created_at=now,
+            updated_at=now,
+            last_login_at=now,
         )
 
         mock_user_repository.get_user = AsyncMock(return_value=user)
