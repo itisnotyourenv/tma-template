@@ -24,7 +24,7 @@ def upgrade() -> None:
         "users",
         sa.Column(
             "created_at",
-            sa.DateTime(),
+            sa.DateTime(timezone=True),
             server_default=sa.func.now(),
             nullable=False,
         ),
@@ -33,7 +33,7 @@ def upgrade() -> None:
         "users",
         sa.Column(
             "updated_at",
-            sa.DateTime(),
+            sa.DateTime(timezone=True),
             server_default=sa.func.now(),
             nullable=False,
         ),
@@ -42,7 +42,7 @@ def upgrade() -> None:
         "users",
         sa.Column(
             "last_login_at",
-            sa.DateTime(),
+            sa.DateTime(timezone=True),
             server_default=sa.func.now(),
             nullable=False,
         ),

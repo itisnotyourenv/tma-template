@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -32,7 +32,7 @@ class TestGetUserProfileInteractor:
 
     @pytest.fixture
     def sample_user_with_all_fields(self) -> User:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return User(
             id=UserId(456),
             username=Username("testuser"),
@@ -46,7 +46,7 @@ class TestGetUserProfileInteractor:
 
     @pytest.fixture
     def sample_user_with_optional_none(self) -> User:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return User(
             id=UserId(456),
             username=None,
@@ -138,7 +138,7 @@ class TestGetUserProfileInteractor:
     ):
         input_dto = GetUserProfileInputDTO(user_id=UserId(user_id_value))
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         user = User(
             id=UserId(user_id_value),
             username=Username("testuser"),

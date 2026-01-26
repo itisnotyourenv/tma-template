@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -62,7 +62,7 @@ class TestCreateUserInteractor:
 
     @pytest.fixture
     def sample_user(self) -> User:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return User(
             id=UserId(456),
             username=Username("testuser"),
@@ -76,7 +76,7 @@ class TestCreateUserInteractor:
 
     @pytest.fixture
     def sample_user_no_optional(self) -> User:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return User(
             id=UserId(789),
             username=None,
@@ -305,7 +305,7 @@ class TestCreateUserInteractor:
             photo_url="http://example.com/photo.jpg",
         )
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         created_user = User(
             id=UserId(user_id_value),
             username=Username("testuser"),

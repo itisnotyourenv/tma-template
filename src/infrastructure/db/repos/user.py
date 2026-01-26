@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Unpack
 
 from sqlalchemy import select, update
@@ -50,7 +50,7 @@ class UserRepositoryImpl(UserRepository, BaseSQLAlchemyRepo):
                 username=fields["username"],
                 first_name=fields["first_name"],
                 last_name=fields["last_name"],
-                last_login_at=datetime.now(timezone.utc),
+                last_login_at=datetime.now(UTC),
             )
             .returning(UserModel)
         )

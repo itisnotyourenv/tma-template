@@ -279,7 +279,10 @@ class TestLoadConfig:
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
-            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", "admin_ids": [123456789]},
+            "telegram": {
+                "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+                "admin_ids": [123456789],
+            },
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
@@ -317,7 +320,10 @@ class TestLoadConfig:
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
-            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", "admin_ids": [123456789]},
+            "telegram": {
+                "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+                "admin_ids": [123456789],
+            },
         }
 
         yaml_content = yaml.dump(config_data)
@@ -412,7 +418,10 @@ class TestLoadConfig:
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
-            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", "admin_ids": [123456789]},
+            "telegram": {
+                "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+                "admin_ids": [123456789],
+            },
             "extra_config": "ignored",
         }
 
@@ -442,7 +451,10 @@ class TestLoadConfig:
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
-            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", "admin_ids": [123456789]},
+            "telegram": {
+                "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+                "admin_ids": [123456789],
+            },
         }
 
         yaml_content = yaml.dump(config_data)
@@ -467,7 +479,10 @@ class TestLoadConfig:
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
-            "telegram": {"bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz", "admin_ids": [123456789]},
+            "telegram": {
+                "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+                "admin_ids": [123456789],
+            },
         }
 
         yaml_content = yaml.dump(config_data)

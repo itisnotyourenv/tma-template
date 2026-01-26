@@ -1,5 +1,5 @@
 from collections.abc import Awaitable, Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import factory
 import pytest
@@ -18,9 +18,9 @@ class UserModelFactory(BaseFactory):
     last_name = factory.Faker("last_name")
     username = factory.Faker("name")
     bio = factory.Faker("sentence")
-    created_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
-    updated_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
-    last_login_at = factory.LazyFunction(lambda: datetime.now(timezone.utc))
+    created_at = factory.LazyFunction(lambda: datetime.now(UTC))
+    updated_at = factory.LazyFunction(lambda: datetime.now(UTC))
+    last_login_at = factory.LazyFunction(lambda: datetime.now(UTC))
 
 
 @pytest.fixture(scope="function")
