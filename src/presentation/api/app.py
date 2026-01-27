@@ -7,6 +7,7 @@ from litestar.middleware import DefineMiddleware
 
 from src.application.auth.exceptions import InvalidInitDataError
 from src.application.common.exceptions import ValidationError
+from src.application.interfaces.auth import AuthService
 from src.infrastructure.auth import AuthServiceImpl
 from src.infrastructure.config import Config, load_config
 from src.infrastructure.di import interactor_providers
@@ -24,10 +25,8 @@ from .providers import provide_user_id
 from .utils import setup_routes
 
 
-def prepare_app(config: Config) -> Litestar:
+def prepare_app(auth_service: AuthService) -> Litestar:
     routes = setup_routes()
-
-    auth_service = AuthServiceImpl(config)
 
     app = Litestar(
         route_handlers=[
@@ -55,7 +54,8 @@ def prepare_app(config: Config) -> Litestar:
 def create_app() -> Litestar:
     config = load_config()
 
-    app = prepare_app(config)
+    auth_service: AuthService = AuthServiceImpl(config)
+    app = prepare_app(auth_service)
 
     interactor_provider_instances = [
         interactor() for interactor in interactor_providers
@@ -63,9 +63,9 @@ def create_app() -> Litestar:
 
     container = make_async_container(
         AuthProvider(),
-        DBProvider(config.postgres),  # todo - pass config with context
+        DBProvider(),
         *interactor_provider_instances,
-        context={Config: config},
+        context={Config: config, AuthService: auth_service},
     )
 
     setup_dishka(container=container, app=app)
