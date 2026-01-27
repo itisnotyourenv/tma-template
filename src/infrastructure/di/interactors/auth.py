@@ -3,7 +3,7 @@ from dishka import Provider, Scope, provide
 from src.application.auth.tg import AuthTgInteractor
 from src.application.common.transaction import TransactionManager
 from src.application.interfaces.auth import AuthService
-from src.domain.user import UserRepository
+from src.application.user.service import UserService
 
 
 class AuthInteractorProvider(Provider):
@@ -12,12 +12,12 @@ class AuthInteractorProvider(Provider):
     @provide
     def provide_auth_tg_interactor(
         self,
-        user_repository: UserRepository,
+        user_service: UserService,
         transaction_manager: TransactionManager,
         auth_service: AuthService,
     ) -> AuthTgInteractor:
         return AuthTgInteractor(
-            user_repository,
+            user_service,
             transaction_manager,
             auth_service,
         )
