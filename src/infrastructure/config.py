@@ -33,6 +33,7 @@ class AuthConfig(BaseModel):
 class TelegramConfig(BaseModel):
     bot_token: str
     admin_ids: list[int]
+    bot_username: str
     tg_init_data: str = "for-auth-endpoint-tests"
 
 

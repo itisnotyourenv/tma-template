@@ -203,14 +203,32 @@ class TestTelegramConfig:
         config = TelegramConfig(
             bot_token="123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
             admin_ids=[123456789],
+            bot_username="my_bot",
         )
 
         assert config.bot_token == "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
         assert config.admin_ids == [123456789]
+        assert config.bot_username == "my_bot"
 
     def test_missing_required_fields(self):
         with pytest.raises(ValidationError):
             TelegramConfig()
+
+    def test_bot_username_required(self):
+        with pytest.raises(ValidationError):
+            TelegramConfig(
+                bot_token="token",
+                admin_ids=[1],
+                # bot_username missing
+            )
+
+    def test_bot_username_valid(self):
+        config = TelegramConfig(
+            bot_token="token",
+            admin_ids=[1],
+            bot_username="my_bot",
+        )
+        assert config.bot_username == "my_bot"
 
     @pytest.mark.parametrize(
         "bot_token,expected",
@@ -224,7 +242,9 @@ class TestTelegramConfig:
         ],
     )
     def test_bot_token_values(self, bot_token, expected):
-        config = TelegramConfig(bot_token=bot_token, admin_ids=[123456789])
+        config = TelegramConfig(
+            bot_token=bot_token, admin_ids=[123456789], bot_username="test_bot"
+        )
         assert config.bot_token == expected
 
 
@@ -241,6 +261,7 @@ class TestConfig:
         telegram_config = TelegramConfig(
             bot_token="123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
             admin_ids=[123456789],
+            bot_username="test_bot",
         )
 
         config = Config(
@@ -282,6 +303,7 @@ class TestLoadConfig:
             "telegram": {
                 "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
                 "admin_ids": [123456789],
+                "bot_username": "test_bot",
             },
         }
 
@@ -323,6 +345,7 @@ class TestLoadConfig:
             "telegram": {
                 "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
                 "admin_ids": [123456789],
+                "bot_username": "test_bot",
             },
         }
 
@@ -421,6 +444,7 @@ class TestLoadConfig:
             "telegram": {
                 "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
                 "admin_ids": [123456789],
+                "bot_username": "test_bot",
             },
             "extra_config": "ignored",
         }
@@ -454,6 +478,7 @@ class TestLoadConfig:
             "telegram": {
                 "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
                 "admin_ids": [123456789],
+                "bot_username": "test_bot",
             },
         }
 
@@ -480,6 +505,7 @@ class TestLoadConfig:
                 "access_token_expire_minutes": 30,
             },
             "telegram": {
+                "bot_username": "test_bot",
                 "bot_token": "123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
                 "admin_ids": [123456789],
             },
