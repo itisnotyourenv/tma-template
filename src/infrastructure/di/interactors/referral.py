@@ -3,8 +3,7 @@ from dishka import Provider, Scope, provide
 from src.application.common.transaction import TransactionManager
 from src.application.referral.get_info import GetReferralInfoInteractor
 from src.application.referral.process import ProcessReferralInteractor
-
-# from src.application.referral.stats import GetStatsInteractor, GetTopReferrersInteractor
+from src.application.referral.stats import GetStatsInteractor, GetTopReferrersInteractor
 from src.domain.user import UserRepository
 from src.infrastructure.config import Config
 
@@ -34,17 +33,16 @@ class ReferralInteractorProvider(Provider):
             user_repository=user_repository,
         )
 
-    # Stats interactors will be added in Task 5
-    # @provide
-    # def provide_get_stats_interactor(
-    #     self,
-    #     user_repository: UserRepository,
-    # ) -> GetStatsInteractor:
-    #     return GetStatsInteractor(user_repository=user_repository)
-    #
-    # @provide
-    # def provide_get_top_referrers_interactor(
-    #     self,
-    #     user_repository: UserRepository,
-    # ) -> GetTopReferrersInteractor:
-    #     return GetTopReferrersInteractor(user_repository=user_repository)
+    @provide
+    def provide_get_stats_interactor(
+        self,
+        user_repository: UserRepository,
+    ) -> GetStatsInteractor:
+        return GetStatsInteractor(user_repository=user_repository)
+
+    @provide
+    def provide_get_top_referrers_interactor(
+        self,
+        user_repository: UserRepository,
+    ) -> GetTopReferrersInteractor:
+        return GetTopReferrersInteractor(user_repository=user_repository)
