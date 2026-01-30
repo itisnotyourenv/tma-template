@@ -11,5 +11,6 @@ interactor_providers = [
 __all__ = [
     "AuthInteractorProvider",
     "ReferralInteractorProvider",
+    "UserInteractorProvider",
     "interactor_providers",
 ]
