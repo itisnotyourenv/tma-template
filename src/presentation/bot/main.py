@@ -10,7 +10,12 @@ from dishka import make_async_container
 from dishka.integrations.aiogram import setup_dishka
 
 from src.infrastructure.config import Config, load_config
-from src.infrastructure.di import AuthProvider, DBProvider, interactor_providers
+from src.infrastructure.di import (
+    AuthProvider,
+    DBProvider,
+    I18nProvider,
+    interactor_providers,
+)
 from src.presentation.bot.routers import setup_routers
 
 
@@ -42,6 +47,7 @@ async def main() -> None:
     container = make_async_container(
         AuthProvider(),
         DBProvider(config.postgres),  # todo - pass config with context
+        I18nProvider(),
         *interactor_provider_instances,
         context={Config: config},
     )
