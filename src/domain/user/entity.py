@@ -16,3 +16,7 @@ class User:
     last_login_at: datetime
     referred_by: UserId | None = None
     referral_count: ReferralCount | None = None
+
+    @property
+    def is_new(self) -> bool:
+        return self.created_at == self.last_login_at

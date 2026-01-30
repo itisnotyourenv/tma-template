@@ -205,13 +205,23 @@ class TestCreateUserInteractor:
     async def test_create_new_user_returns_is_new_true(
         self,
         interactor,
-        mock_user_repository,
+        mock_user_service,
         mock_transaction_manager,
         sample_create_user_input_dto,
-        sample_user,
     ):
-        mock_user_repository.get_user = AsyncMock(return_value=None)
-        mock_user_repository.create_user = AsyncMock(return_value=sample_user)
+        # New user has created_at == last_login_at
+        now = datetime.now(UTC)
+        new_user = User(
+            id=UserId(456),
+            username=Username("testuser"),
+            first_name=FirstName("John"),
+            last_name=LastName("Doe"),
+            bio=None,
+            created_at=now,
+            updated_at=now,
+            last_login_at=now,  # Same as created_at = is_new=True
+        )
+        mock_user_service.upsert_user = AsyncMock(return_value=new_user)
         mock_transaction_manager.commit = AsyncMock()
 
         result = await interactor(sample_create_user_input_dto)
@@ -221,13 +231,24 @@ class TestCreateUserInteractor:
     async def test_update_existing_user_returns_is_new_false(
         self,
         interactor,
-        mock_user_repository,
+        mock_user_service,
         mock_transaction_manager,
         sample_create_user_input_dto,
-        sample_user,
     ):
-        mock_user_repository.get_user = AsyncMock(return_value=sample_user)
-        mock_user_repository.update_user = AsyncMock(return_value=sample_user)
+        # Existing user has last_login_at != created_at
+        created = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
+        now = datetime.now(UTC)
+        existing_user = User(
+            id=UserId(456),
+            username=Username("testuser"),
+            first_name=FirstName("John"),
+            last_name=LastName("Doe"),
+            bio=None,
+            created_at=created,
+            updated_at=now,
+            last_login_at=now,  # Different from created_at = is_new=False
+        )
+        mock_user_service.upsert_user = AsyncMock(return_value=existing_user)
         mock_transaction_manager.commit = AsyncMock()
 
         result = await interactor(sample_create_user_input_dto)
