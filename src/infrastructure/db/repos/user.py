@@ -106,10 +106,10 @@ class UserRepositoryImpl(UserRepository, BaseSQLAlchemyRepo):
 
         return [
             TopReferrer(
-                user_id=int(u.id),
-                username=str(u.username) if u.username else None,
-                first_name=str(u.first_name),
-                referral_count=int(u.referral_count),
+                user_id=u.id.value,
+                username=u.username.value if u.username else None,
+                first_name=u.first_name.value,
+                referral_count=u.referral_count.value,
             )
             for u in users
         ]
