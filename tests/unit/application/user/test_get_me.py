@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+from src.application.user.exceptions import UserNotFoundError
 from src.application.user.get_me import (
     GetUserProfileInputDTO,
     GetUserProfileInteractor,
@@ -108,7 +109,7 @@ class TestGetUserProfileInteractor:
     ):
         mock_user_repository.get_user = AsyncMock(return_value=None)
 
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(UserNotFoundError):
             await interactor(sample_input_dto)
 
         mock_user_repository.get_user.assert_awaited_once_with(UserId(456))
