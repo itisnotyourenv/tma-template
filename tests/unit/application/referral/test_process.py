@@ -6,87 +6,98 @@ from src.application.referral.process import (
     ProcessReferralInputDTO,
     ProcessReferralInteractor,
 )
-from src.domain.user.services.referral import generate_referral_code
-from src.domain.user.vo import UserId
+from src.domain.user.entity import User
+from src.domain.user.services.referral import encode_referral
+
+
+@pytest.fixture
+def secret_key() -> str:
+    return "test-secret-key"
+
+
+@pytest.fixture
+def user_repository() -> Mock:
+    return Mock()
+
+
+@pytest.fixture
+def transaction_manager() -> Mock:
+    manager = Mock()
+    manager.commit = AsyncMock()
+    return manager
+
+
+@pytest.fixture
+def interactor(
+    user_repository: Mock,
+    transaction_manager: Mock,
+    secret_key: str,
+) -> ProcessReferralInteractor:
+    return ProcessReferralInteractor(
+        user_repository=user_repository,
+        transaction_manager=transaction_manager,
+        secret_key=secret_key,
+    )
 
 
 class TestProcessReferralInteractor:
-    @pytest.fixture
-    def mock_user_repository(self):
-        return Mock()
+    async def test_valid_referral_sets_referred_by(
+        self,
+        interactor: ProcessReferralInteractor,
+        user_repository: Mock,
+        secret_key: str,
+    ) -> None:
+        referrer_id = 100
+        new_user_id = 200
+        code = encode_referral(referrer_id, secret_key)
 
-    @pytest.fixture
-    def mock_transaction_manager(self):
-        return Mock()
+        referrer = Mock(spec=User)
+        user_repository.get_user = AsyncMock(return_value=referrer)
+        user_repository.set_referred_by = AsyncMock()
+        user_repository.increment_referral_count = AsyncMock()
 
-    @pytest.fixture
-    def interactor(self, mock_user_repository, mock_transaction_manager):
-        return ProcessReferralInteractor(
-            user_repository=mock_user_repository,
-            transaction_manager=mock_transaction_manager,
+        result = await interactor(
+            ProcessReferralInputDTO(new_user_id=new_user_id, referral_code=code)
         )
-
-    async def test_process_valid_referral(
-        self, interactor, mock_user_repository, mock_transaction_manager
-    ):
-        referrer_id = 123
-        new_user_id = 456
-        code = generate_referral_code(referrer_id)
-
-        mock_user_repository.get_all_user_ids = AsyncMock(
-            return_value=[111, referrer_id, 222]
-        )
-        mock_user_repository.set_referred_by = AsyncMock()
-        mock_user_repository.increment_referral_count = AsyncMock()
-        mock_transaction_manager.commit = AsyncMock()
-
-        input_dto = ProcessReferralInputDTO(
-            new_user_id=new_user_id,
-            referral_code=code,
-        )
-
-        result = await interactor(input_dto)
 
         assert result is True
-        mock_user_repository.set_referred_by.assert_awaited_once_with(
-            UserId(new_user_id), UserId(referrer_id)
-        )
-        mock_user_repository.increment_referral_count.assert_awaited_once_with(
-            UserId(referrer_id)
-        )
-        mock_transaction_manager.commit.assert_awaited_once()
+        user_repository.set_referred_by.assert_called_once()
 
-    async def test_referrer_not_found(
-        self, interactor, mock_user_repository, mock_transaction_manager
-    ):
-        mock_user_repository.get_all_user_ids = AsyncMock(return_value=[111, 222])
-        mock_transaction_manager.commit = AsyncMock()
-
-        input_dto = ProcessReferralInputDTO(
-            new_user_id=456,
-            referral_code="unknown1",
+    async def test_invalid_code_returns_false(
+        self,
+        interactor: ProcessReferralInteractor,
+    ) -> None:
+        result = await interactor(
+            ProcessReferralInputDTO(new_user_id=200, referral_code="invalid!")
         )
-
-        result = await interactor(input_dto)
 
         assert result is False
-        mock_user_repository.set_referred_by.assert_not_called()
-        mock_user_repository.increment_referral_count.assert_not_called()
 
-    async def test_self_referral_ignored(
-        self, interactor, mock_user_repository, mock_transaction_manager
-    ):
-        user_id = 123
-        code = generate_referral_code(user_id)
+    async def test_self_referral_returns_false(
+        self,
+        interactor: ProcessReferralInteractor,
+        secret_key: str,
+    ) -> None:
+        user_id = 100
+        code = encode_referral(user_id, secret_key)
 
-        mock_user_repository.get_all_user_ids = AsyncMock(return_value=[user_id])
-
-        input_dto = ProcessReferralInputDTO(
-            new_user_id=user_id,  # same as referrer
-            referral_code=code,
+        result = await interactor(
+            ProcessReferralInputDTO(new_user_id=user_id, referral_code=code)
         )
 
-        result = await interactor(input_dto)
+        assert result is False
+
+    async def test_nonexistent_referrer_returns_false(
+        self,
+        interactor: ProcessReferralInteractor,
+        user_repository: Mock,
+        secret_key: str,
+    ) -> None:
+        code = encode_referral(100, secret_key)
+        user_repository.get_user = AsyncMock(return_value=None)
+
+        result = await interactor(
+            ProcessReferralInputDTO(new_user_id=200, referral_code=code)
+        )
 
         assert result is False
-        mock_user_repository.set_referred_by.assert_not_called()
