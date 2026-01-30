@@ -5,18 +5,9 @@ from dishka.integrations.aiogram import FromDishka, inject
 from fluentogram import TranslatorHub
 
 from src.application.user.create import CreateUserInputDTO, CreateUserInteractor
-from src.infrastructure.i18n import DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES
+from src.presentation.bot.utils.i18n import get_user_locale
 
 router = Router(name="commands")
-
-
-def get_user_locale(language_code: str | None) -> str:
-    """Get locale from Telegram language code."""
-    if language_code:
-        lang = language_code.split("-")[0].lower()
-        if lang in SUPPORTED_LANGUAGES:
-            return lang
-    return DEFAULT_LANGUAGE
 
 
 @router.message(CommandStart())
