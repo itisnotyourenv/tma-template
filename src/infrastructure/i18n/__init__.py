@@ -5,9 +5,11 @@ from .hub import (
     SUPPORTED_LANGUAGES,
     create_translator_hub,
 )
+from .provider import I18nProvider
 
 __all__ = [
     "DEFAULT_LANGUAGE",
     "SUPPORTED_LANGUAGES",
+    "I18nProvider",
     "create_translator_hub",
 ]
