@@ -28,9 +28,11 @@ class ReferralInteractorProvider(Provider):
     def provide_get_referral_info_interactor(
         self,
         user_repository: UserRepository,
+        config: Config,
     ) -> GetReferralInfoInteractor:
         return GetReferralInfoInteractor(
             user_repository=user_repository,
+            secret_key=config.auth.secret_key,
         )
 
     @provide

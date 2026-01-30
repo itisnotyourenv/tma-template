@@ -2,30 +2,41 @@ from dataclasses import dataclass
 
 from src.application.common.interactor import Interactor
 from src.domain.user import UserRepository
-from src.domain.user.services.referral import generate_referral_code
+from src.domain.user.services.referral import encode_referral
 from src.domain.user.vo import UserId
 
 
 @dataclass
-class ReferralInfoOutputDTO:
+class GetReferralInfoInputDTO:
+    user_id: int
+
+
+@dataclass
+class GetReferralInfoOutputDTO:
     referral_code: str
     referral_count: int
 
 
-class GetReferralInfoInteractor(Interactor[int, ReferralInfoOutputDTO]):
-    def __init__(self, user_repository: UserRepository) -> None:
+class GetReferralInfoInteractor(
+    Interactor[GetReferralInfoInputDTO, GetReferralInfoOutputDTO | None]
+):
+    def __init__(
+        self,
+        user_repository: UserRepository,
+        secret_key: str,
+    ) -> None:
         self.user_repository = user_repository
+        self.secret_key = secret_key
 
-    async def __call__(self, user_id: int) -> ReferralInfoOutputDTO:
-        user = await self.user_repository.get_user(UserId(user_id))
+    async def __call__(
+        self, data: GetReferralInfoInputDTO
+    ) -> GetReferralInfoOutputDTO | None:
+        user = await self.user_repository.get_user(UserId(data.user_id))
 
         if user is None:
-            raise ValueError("User not found")
+            return None
 
-        referral_code = generate_referral_code(user_id)
-        referral_count = user.referral_count.value if user.referral_count else 0
-
-        return ReferralInfoOutputDTO(
-            referral_code=referral_code,
-            referral_count=referral_count,
+        return GetReferralInfoOutputDTO(
+            referral_code=encode_referral(data.user_id, self.secret_key),
+            referral_count=user.referral_count.value if user.referral_count else 0,
         )
