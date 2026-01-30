@@ -36,8 +36,6 @@ class AuthTgInteractor(Interactor[AuthTgInputDTO, AuthTgOutputDTO]):
                 username=parsed_data.username,
                 first_name=parsed_data.first_name,
                 last_name=parsed_data.last_name,
-                is_premium=parsed_data.is_premium,
-                photo_url=parsed_data.photo_url,
             )
         )
 

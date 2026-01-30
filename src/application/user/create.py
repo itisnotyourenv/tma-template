@@ -11,8 +11,6 @@ class CreateUserInputDTO:
     username: str | None
     first_name: str
     last_name: str | None
-    is_premium: bool
-    photo_url: str | None
 
 
 @dataclass
@@ -39,8 +37,6 @@ class CreateUserInteractor(Interactor[CreateUserInputDTO, CreateUserOutputDTO]):
                 username=data.username,
                 first_name=data.first_name,
                 last_name=data.last_name,
-                is_premium=data.is_premium,
-                photo_url=data.photo_url,
             )
         )
 

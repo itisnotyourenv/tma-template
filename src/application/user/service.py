@@ -11,8 +11,6 @@ class UpsertUserData:
     username: str | None
     first_name: str
     last_name: str | None
-    is_premium: bool
-    photo_url: str | None
 
 
 class UserService:

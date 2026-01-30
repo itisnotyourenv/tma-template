@@ -55,8 +55,6 @@ class TestAuthServiceImpl:
         user_mock.username = "testuser"
         user_mock.first_name = "Test"
         user_mock.last_name = "User"
-        user_mock.is_premium = True
-        user_mock.photo_url = "https://example.com/photo.jpg"
         user_mock.language_code = "en"
 
         parsed_data_mock = Mock()
@@ -138,9 +136,7 @@ class TestAuthServiceImpl:
         assert result.username == "testuser"
         assert result.first_name == "Test"
         assert result.last_name == "User"
-        assert result.is_premium is True
         assert result.start_param == "start123"
-        assert result.photo_url == "https://example.com/photo.jpg"
         assert result.ui_language_code == "en"
 
         mock_parse.assert_called_once_with("test-bot-token", init_data)
@@ -154,8 +150,6 @@ class TestAuthServiceImpl:
         user_mock.username = None
         user_mock.first_name = "Test"
         user_mock.last_name = None
-        user_mock.is_premium = None
-        user_mock.photo_url = "https://example.com/photo.jpg"
         user_mock.language_code = None
 
         parsed_data_mock = Mock()
@@ -172,9 +166,7 @@ class TestAuthServiceImpl:
         assert result.username is None
         assert result.first_name == "Test"
         assert result.last_name is None
-        assert result.is_premium is False  # None converted to False
         assert result.start_param is None
-        assert result.photo_url == "https://example.com/photo.jpg"
         assert result.ui_language_code is None
 
     @patch("src.infrastructure.auth.safe_parse_webapp_init_data")
@@ -197,29 +189,6 @@ class TestAuthServiceImpl:
 
         with pytest.raises(
             ValidationError, match="Invalid init data 'init_data_without_user'"
-        ):
-            auth_service.validate_init_data(init_data)
-
-    @patch("src.infrastructure.auth.safe_parse_webapp_init_data")
-    def test_validate_init_data_missing_photo_url(self, mock_parse, auth_service):
-        user_mock = Mock()
-        user_mock.id = 12345
-        user_mock.username = "testuser"
-        user_mock.first_name = "Test"
-        user_mock.last_name = "User"
-        user_mock.is_premium = True
-        user_mock.photo_url = None
-        user_mock.language_code = "en"
-
-        parsed_data_mock = Mock()
-        parsed_data_mock.user = user_mock
-        parsed_data_mock.start_param = "start123"
-
-        mock_parse.return_value = parsed_data_mock
-        init_data = "init_data_without_photo"
-
-        with pytest.raises(
-            ValidationError, match="Invalid init data 'init_data_without_photo'"
         ):
             auth_service.validate_init_data(init_data)
 
@@ -247,9 +216,7 @@ class TestInitDataDTO:
             username="testuser",
             first_name="Test",
             last_name="User",
-            is_premium=True,
             start_param="start123",
-            photo_url="https://example.com/photo.jpg",
             ui_language_code="en",
         )
 
@@ -257,9 +224,7 @@ class TestInitDataDTO:
         assert dto.username == "testuser"
         assert dto.first_name == "Test"
         assert dto.last_name == "User"
-        assert dto.is_premium is True
         assert dto.start_param == "start123"
-        assert dto.photo_url == "https://example.com/photo.jpg"
         assert dto.ui_language_code == "en"
 
     def test_init_data_dto_with_none_values(self):
@@ -268,9 +233,7 @@ class TestInitDataDTO:
             username=None,
             first_name="Test",
             last_name=None,
-            is_premium=False,
             start_param=None,
-            photo_url="https://example.com/photo.jpg",
             ui_language_code=None,
         )
 
@@ -278,7 +241,5 @@ class TestInitDataDTO:
         assert dto.username is None
         assert dto.first_name == "Test"
         assert dto.last_name is None
-        assert dto.is_premium is False
         assert dto.start_param is None
-        assert dto.photo_url == "https://example.com/photo.jpg"
         assert dto.ui_language_code is None
