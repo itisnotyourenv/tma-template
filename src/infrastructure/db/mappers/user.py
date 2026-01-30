@@ -14,6 +14,8 @@ class UserMapper:
             created_at=model.created_at,
             updated_at=model.updated_at,
             last_login_at=model.last_login_at,
+            referred_by=model.referred_by,
+            referral_count=model.referral_count,
         )
 
     @staticmethod
@@ -27,4 +29,6 @@ class UserMapper:
             created_at=user.created_at,
             updated_at=user.updated_at,
             last_login_at=user.last_login_at,
+            referred_by=user.referred_by,
+            referral_count=user.referral_count,
         )
