@@ -1,209 +1,272 @@
 # Referral System Design
 
-**Дата:** 2026-01-30
-**Статус:** Утверждён
+## Overview
 
-## Обзор
+Реферальная система для отслеживания кто кого пригласил в бот. Только для внутренней аналитики — без UI для пользователей.
 
-Реализация реферальной системы для отслеживания, кто кого пригласил в бота. Система включает:
-- Хранение связи реферер → приглашённый
-- Счётчик приглашённых пользователей
-- Генерация реферальной ссылки на основе хеша ID
-- Команда `/referral` для получения ссылки и статистики
+## Requirements
 
-## Требования
+- **Цель**: Аналитика — отслеживать кто кого привёл
+- **Реферальный код**: Зашифрованный User ID (обратимое шифрование)
+- **UI для пользователей**: Нет
+- **Просмотр статистики**: Админ-команды в боте
+- **Данные для админов**: Общая статистика + топ рефереров
+- **Определение админов**: Существующий `admin_ids` из конфига
+- **Невалидный реферер**: Игнорируется, пользователь регистрируется без реферера
 
-- **Цель:** отслеживание (аналитика), без системы вознаграждений
-- **Ссылка:** хеш из ID пользователя (8 символов)
-- **Хранение:** поле `referred_by` + счётчик `referral_count`
-- **Интерфейс:** команда `/referral` в боте
-- **Крайний случай:** реферал засчитывается только для новых пользователей
+## Data Model
 
-## Модель данных
-
-### Изменения в модели User
-
-Добавляем два поля в существующую модель пользователя:
+### User Entity Changes
 
 ```python
-# domain/user/entity.py
+# src/domain/user/entity.py
 @dataclass
 class User:
-    # ... существующие поля ...
-    referred_by: UserId | None      # ID пользователя, который пригласил
-    referral_count: int             # Количество приглашённых (по умолчанию 0)
+    id: UserId
+    first_name: FirstName
+    last_name: LastName | None
+    username: Username | None
+    bio: Bio | None
+    referred_by: UserId | None  # NEW: ID пригласившего
+    created_at: datetime
+    updated_at: datetime
+    last_login_at: datetime
 ```
 
-### Миграция базы данных
+### Database Migration
 
 ```sql
-ALTER TABLE users
-    ADD COLUMN referred_by BIGINT REFERENCES users(id),
-    ADD COLUMN referral_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN referred_by BIGINT REFERENCES users(id) ON DELETE RESTRICT;
+CREATE INDEX ix_users_referred_by ON users(referred_by);
 ```
 
-**Почему счётчик, а не COUNT запрос:**
-- Мгновенный доступ без JOIN/подзапроса
-- При больших объёмах COUNT по внешнему ключу дорогой
-- Инкрементируется атомарно при регистрации нового реферала
+- `ON DELETE RESTRICT` — нельзя удалить пользователя, у которого есть рефералы
+- Индекс для быстрых запросов топа рефереров
 
-## Генерация реферального кода
+Миграция генерируется автоматически: `alembic revision --autogenerate -m "add_referral_system"`
 
-### Алгоритм хеширования
+## Referral Code Encoding
 
-Используем детерминированный хеш из Telegram ID пользователя:
+XOR-шифрование с ключом из `auth.secret_key`. Использует только стандартную библиотеку Python.
 
 ```python
-# domain/user/services/referral.py
+# src/domain/user/services/referral.py
 import hashlib
+import struct
+import base64
 
-def generate_referral_code(user_id: int) -> str:
-    """Генерирует 8-символьный код из user_id."""
-    hash_input = f"referral:{user_id}".encode()
-    hash_digest = hashlib.sha256(hash_input).hexdigest()
-    return hash_digest[:8]  # Первые 8 символов
+def encode_referral(user_id: int, secret_key: str) -> str:
+    """Шифрует user_id в короткий код"""
+    key_hash = hashlib.sha256(secret_key.encode()).digest()
+    key_int = int.from_bytes(key_hash[:8], "big")
 
-def decode_referral_code(code: str, all_user_ids: list[int]) -> int | None:
-    """Находит user_id по коду (перебор существующих пользователей)."""
-    for user_id in all_user_ids:
-        if generate_referral_code(user_id) == code:
-            return user_id
-    return None
+    encrypted = user_id ^ key_int
+    packed = struct.pack(">Q", encrypted)
+    return base64.urlsafe_b64encode(packed).decode().rstrip("=")
+
+def decode_referral(code: str, secret_key: str) -> int | None:
+    """Расшифровывает код обратно в user_id"""
+    try:
+        padding = 4 - len(code) % 4
+        if padding != 4:
+            code += "=" * padding
+
+        packed = base64.urlsafe_b64decode(code)
+        encrypted = struct.unpack(">Q", packed)[0]
+
+        key_hash = hashlib.sha256(secret_key.encode()).digest()
+        key_int = int.from_bytes(key_hash[:8], "big")
+
+        return encrypted ^ key_int
+    except Exception:
+        return None
 ```
 
-**Характеристики:**
-- **Детерминированность** — не нужно хранить коды в БД
-- **Соль "referral:"** — защита от простого перебора
-- **8 символов** — 16^8 = 4 млрд комбинаций, достаточно для уникальности
+**Deep link формат**: `t.me/bot_name?start=ref_<code>`
 
-### Формат ссылки
+## Application Layer
 
-```
-https://t.me/bot_username?start=ref_a1b2c3d4
-```
+### CreateUserInteractor Changes
 
-Префикс `ref_` позволяет отличить реферальные ссылки от других `start_param`.
-
-## Обработка реферальной ссылки
-
-### Модификация /start хендлера
-
-При старте бота проверяем `start_param` на наличие реферального кода:
+Валидация реферера происходит в интеракторе (бизнес-логика):
 
 ```python
-# presentation/bot/routers/commands.py
-@router.message(CommandStart())
-async def start_handler(
-    message: Message,
-    command: CommandObject,
-    create_user: CreateUserInteractor,
-    process_referral: ProcessReferralInteractor,
-):
-    user = message.from_user
+# src/application/user/create.py
+class CreateUserInteractor:
+    async def __call__(self, data: CreateUserInputDTO) -> CreateUserOutputDTO:
+        validated_referrer_id = None
+        if data.referred_by:
+            referrer = await self.user_repository.get_user(UserId(data.referred_by))
+            if referrer:
+                validated_referrer_id = data.referred_by
 
-    # Создаём/обновляем пользователя
-    result = await create_user(...)
-    is_new_user = result.is_new
-
-    # Обрабатываем реферал только для новых пользователей
-    if is_new_user and command.args and command.args.startswith("ref_"):
-        referral_code = command.args[4:]  # Убираем "ref_"
-        await process_referral(
-            new_user_id=user.id,
-            referral_code=referral_code,
+        user = await self.user_service.upsert_user(
+            UpsertUserData(..., referred_by=validated_referrer_id)
         )
-
-    await message.answer(f"Привет, {user.first_name}!")
+        ...
 ```
 
-### Логика ProcessReferralInteractor
-
-1. Найти реферера по коду (decode_referral_code)
-2. Проверить, что реферер существует и это не сам пользователь
-3. Установить `referred_by` у нового пользователя
-4. Инкрементировать `referral_count` у реферера
-
-### Изменения в CreateUserInteractor
-
-- Возвращать флаг `is_new` — был ли пользователь создан или обновлён
-
-## Команда /referral
-
-### Хендлер
+### New Interactors
 
 ```python
-# presentation/bot/routers/referral.py
-from aiogram import Router
-from aiogram.filters import Command
-from aiogram.types import Message
+# src/application/user/stats.py
 
-router = Router(name="referral")
+@dataclass
+class StatsOutputDTO:
+    total_users: int
+    referred_count: int
+    referred_percent: float
+    organic_count: int
+    organic_percent: float
 
-@router.message(Command("referral"))
-async def referral_handler(
+@dataclass
+class TopReferrerDTO:
+    user_id: int
+    username: str | None
+    first_name: str
+    count: int
+
+class GetStatsInteractor:
+    async def __call__(self) -> StatsOutputDTO: ...
+
+class GetTopReferrersInteractor:
+    async def __call__(self, limit: int = 10) -> list[TopReferrerDTO]: ...
+```
+
+## Presentation Layer
+
+### Bot Handler Changes
+
+```python
+# src/presentation/bot/routers/commands.py
+@router.message(CommandStart(deep_link=True))
+async def command_start_handler(message: Message, command: CommandObject, ...):
+    referred_by_id = None
+
+    if command.args and command.args.startswith("ref_"):
+        code = command.args[4:]
+        referred_by_id = decode_referral(code, secret_key)
+
+    user = await create_user_interactor(
+        CreateUserInputDTO(..., referred_by=referred_by_id)
+    )
+```
+
+### Admin Commands
+
+Переименовать `example.py` → `stats.py`:
+
+```python
+# src/presentation/bot/routers/admin/stats.py
+
+@router.message(Command("stats"))
+@inject
+async def stats_handler(
     message: Message,
-    get_referral_info: GetReferralInfoInteractor,
-    config: Config,
+    hub: FromDishka[TranslatorHub],
+    interactor: FromDishka[GetStatsInteractor],
 ):
-    user_id = message.from_user.id
-    info = await get_referral_info(user_id)
+    locale = extract_language_code(message.from_user.language_code)
+    i18n = hub.get_translator_by_locale(locale)
 
-    bot_username = config.telegram.bot_username
-    referral_link = f"https://t.me/{bot_username}?start=ref_{info.referral_code}"
+    stats = await interactor()
 
-    text = (
-        f"🔗 Ваша реферальная ссылка:\n"
-        f"{referral_link}\n\n"
-        f"👥 Приглашено пользователей: {info.referral_count}"
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(
+            text=i18n.get("stats-top-inviters-btn"),
+            callback_data="ref_top"
+        )]
+    ])
+
+    await message.answer(
+        text=i18n.get("stats-overview", ...),
+        reply_markup=keyboard
     )
 
-    await message.answer(text)
+@router.callback_query(F.data == "ref_top")
+@inject
+async def ref_top_callback(callback: CallbackQuery, ...):
+    top = await get_top_referrers_interactor(limit=10)
+    text = i18n.get("stats-top-inviters", limit=10)
+    for i, ref in enumerate(top, 1):
+        name = f"@{ref.username}" if ref.username else ref.first_name
+        text += f"\n{i}. {name} — {ref.count}"
+
+    await callback.message.edit_text(text)
 ```
 
-### GetReferralInfoInteractor
+## Localization
 
-- Получает пользователя из БД
-- Генерирует реферальный код из ID
-- Возвращает DTO с кодом и счётчиком
+```ftl
+# locales/ru/bot.ftl
+stats-overview = 📊 Статистика
 
-### Дополнение конфигурации
+    Всего: { $total }
+    По рефералам: { $referred } ({ $referred_pct }%)
+    Органика: { $organic } ({ $organic_pct }%)
 
-- Добавить `bot_username` в `config.telegram` для формирования ссылки
+stats-top-inviters-btn = 🏆 Топ инвайтеров
 
-## Структура файлов
+stats-top-inviters = 🏆 Топ-{ $limit } инвайтеров:
+```
 
-### Новые файлы
+```ftl
+# locales/en/bot.ftl
+stats-overview = 📊 Statistics
+
+    Total: { $total }
+    Referred: { $referred } ({ $referred_pct }%)
+    Organic: { $organic } ({ $organic_pct }%)
+
+stats-top-inviters-btn = 🏆 Top inviters
+
+stats-top-inviters = 🏆 Top { $limit } inviters:
+```
+
+## File Structure
 
 ```
 src/
 ├── domain/user/
+│   ├── vo.py                    # (без изменений)
+│   ├── entity.py                # + referred_by: UserId | None
 │   └── services/
-│       └── referral.py          # generate_referral_code, decode_referral_code
-├── application/
-│   └── referral/
-│       ├── process.py           # ProcessReferralInteractor
-│       └── get_info.py          # GetReferralInfoInteractor
-├── presentation/bot/routers/
-│   └── referral.py              # /referral хендлер
-└── infrastructure/db/
-    └── migrations/
-        └── versions/
-            └── xxx_add_referral_fields.py
+│       └── referral.py          # encode/decode (NEW)
+│
+├── application/user/
+│   ├── create.py                # + валидация реферера
+│   ├── dto.py                   # + referred_by в DTO
+│   └── stats.py                 # GetStatsInteractor, GetTopReferrersInteractor (NEW)
+│
+├── infrastructure/
+│   ├── db/
+│   │   ├── models/user.py       # + referred_by колонка
+│   │   ├── repos/user.py        # + методы для статистики
+│   │   └── migrations/versions/ # + миграция (autogenerate)
+│   └── di/                      # + провайдеры для новых интеракторов
+│
+├── presentation/bot/
+│   └── routers/
+│       ├── commands.py          # + парсинг ref_ из deep link
+│       └── admin/
+│           └── stats.py         # /stats + callback (NEW, replace example.py)
+│
+└── locales/
+    ├── ru/bot.ftl               # + ключи статистики
+    └── en/bot.ftl               # + ключи статистики
 ```
 
-### Изменяемые файлы
+## Summary
 
-- `domain/user/entity.py` — добавить поля
-- `domain/user/vo.py` — добавить ReferralCount value object (если нужно)
-- `infrastructure/db/models/user.py` — добавить колонки
-- `application/user/create.py` — возвращать `is_new`
-- `presentation/bot/routers/commands.py` — обработка ref_ в /start
-- `presentation/bot/main.py` — подключить referral router
-- `infrastructure/config.py` — добавить bot_username
-- `infrastructure/di/` — зарегистрировать новые интеракторы
-
-## Тестирование
-
-- Unit-тесты для `generate_referral_code` (детерминированность, длина)
-- Unit-тесты для `decode_referral_code` (корректный поиск, not found)
-- Integration-тест: полный флоу — создание реферера → переход по ссылке → проверка связи и счётчика
+| Аспект | Решение |
+|--------|---------|
+| **Цель** | Аналитика — кто кого пригласил |
+| **Хранение** | Поле `referred_by` в таблице `users` |
+| **Реферальный код** | XOR-шифрование user_id (stdlib) |
+| **Deep link** | `t.me/bot?start=ref_<code>` |
+| **Невалидный реферер** | Игнорируется в интеракторе |
+| **FK constraint** | `ON DELETE RESTRICT` |
+| **UI для пользователей** | Нет |
+| **Админ-доступ** | Существующий `AdminFilter` |
+| **Админ-команда** | `/stats` + inline-кнопка |
+| **Локализация** | fluentogram (ru/en) |
