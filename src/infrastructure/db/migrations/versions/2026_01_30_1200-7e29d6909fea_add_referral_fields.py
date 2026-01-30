@@ -39,11 +39,14 @@ def upgrade() -> None:
         "users",
         ["referred_by"],
         ["id"],
+        ondelete="RESTRICT",
     )
+    op.create_index("ix_users_referred_by", "users", ["referred_by"])
 
 
 def downgrade() -> None:
     """Downgrade schema."""
+    op.drop_index("ix_users_referred_by", table_name="users")
     op.drop_constraint("fk_users_referred_by", "users", type_="foreignkey")
     op.drop_column("users", "referral_count")
     op.drop_column("users", "referred_by")
