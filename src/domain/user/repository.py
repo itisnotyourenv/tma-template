@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Protocol, TypedDict, Unpack, overload
+from typing import Protocol, overload
 
 from src.domain.user.entity import User
 from src.domain.user.vo import UserId, Username
@@ -21,23 +21,6 @@ class TopReferrer:
     referral_count: int
 
 
-class CreateUserDTO(TypedDict):
-    id: int
-    username: str | None
-    first_name: str
-    last_name: str | None
-    is_premium: bool
-    photo_url: str
-
-
-class UpdateUserDTO(TypedDict):
-    username: str | None
-    first_name: str
-    last_name: str | None
-    is_premium: bool
-    photo_url: str
-
-
 class UserRepository(Protocol):
     @overload
     async def get_user(self, identifier: UserId) -> User | None: ...
@@ -50,13 +33,11 @@ class UserRepository(Protocol):
         raise NotImplementedError
 
     @abstractmethod
-    async def create_user(self, user: CreateUserDTO) -> User:
+    async def create_user(self, user: User) -> User:
         raise NotImplementedError
 
     @abstractmethod
-    async def update_user(
-        self, user_id: UserId, **fields: Unpack[UpdateUserDTO]
-    ) -> User:
+    async def update_user(self, user: User) -> User:
         raise NotImplementedError
 
     @abstractmethod

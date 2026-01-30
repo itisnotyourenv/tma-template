@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from src.application.common.interactor import Interactor
+from src.application.user.exceptions import UserNotFoundError
 from src.domain.user import (
     UserRepository,
 )
@@ -33,7 +34,7 @@ class GetUserProfileInteractor(
         user = await self.user_repository.get_user(data.user_id)
 
         if not user:
-            raise NotImplementedError
+            raise UserNotFoundError(data.user_id)
 
         return GetUserProfileOutputDTO(
             id=user.id.value,

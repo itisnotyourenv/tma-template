@@ -5,14 +5,15 @@ import pytest
 
 from src.application.auth.tg import AuthTgInputDTO, AuthTgInteractor, AuthTgOutputDTO
 from src.application.interfaces.auth import InitDataDTO
+from src.application.user.service import UserService
 from src.domain.user import User
 from src.domain.user.vo import Bio, FirstName, LastName, UserId, Username
 
 
 class TestAuthTgInteractor:
     @pytest.fixture
-    def mock_user_repository(self):
-        return Mock()
+    def mock_user_service(self):
+        return Mock(spec=UserService)
 
     @pytest.fixture
     def mock_transaction_manager(self):
@@ -25,12 +26,12 @@ class TestAuthTgInteractor:
     @pytest.fixture
     def interactor(
         self,
-        mock_user_repository,
+        mock_user_service,
         mock_auth_service,
         mock_transaction_manager,
     ) -> AuthTgInteractor:
         return AuthTgInteractor(
-            user_repository=mock_user_repository,
+            user_service=mock_user_service,
             auth_service=mock_auth_service,
             transaction_manager=mock_transaction_manager,
         )
@@ -42,9 +43,7 @@ class TestAuthTgInteractor:
             username="testuser",
             first_name="Test",
             last_name="User",
-            is_premium=False,
             start_param=None,
-            photo_url="http://example.com/photo.jpg",
             ui_language_code="en",
         )
 
@@ -66,54 +65,20 @@ class TestAuthTgInteractor:
             last_login_at=now,
         )
 
-    async def test_auth_new_user_success(
+    async def test_auth_user_success(
         self,
         interactor,
-        mock_user_repository,
-        mock_auth_service,
-        mock_transaction_manager,
-        sample_auth_tg_input_dto,
-        sample_init_data_dto,
-    ):
-        # prepare auth service mocks
-        mock_auth_service.validate_init_data = Mock(return_value=sample_init_data_dto)
-        jwt_token = "valid_jwt_token"
-        mock_auth_service.create_access_token = Mock(return_value=jwt_token)
-        # mock repository methods
-        mock_user_repository.get_user = AsyncMock(return_value=None)
-        mock_user_repository.create_user = AsyncMock(return_value=None)
-        mock_transaction_manager.commit = AsyncMock()
-
-        result = await interactor(sample_auth_tg_input_dto)
-
-        assert isinstance(result, AuthTgOutputDTO)
-        assert result.access_token == jwt_token
-
-        mock_auth_service.validate_init_data.assert_called_once()
-        mock_user_repository.get_user.assert_awaited_once()
-        mock_user_repository.create_user.assert_awaited_once()
-        mock_user_repository.update_user.assert_not_called()
-        mock_transaction_manager.commit.assert_called_once()
-        mock_auth_service.create_access_token.assert_called_once()
-
-    async def test_auth_existed_user_success(
-        self,
-        interactor,
-        mock_user_repository,
+        mock_user_service,
         mock_auth_service,
         mock_transaction_manager,
         sample_auth_tg_input_dto,
         sample_init_data_dto,
         sample_user,
     ):
-        # prepare auth service mocks
         mock_auth_service.validate_init_data = Mock(return_value=sample_init_data_dto)
         jwt_token = "valid_jwt_token"
         mock_auth_service.create_access_token = Mock(return_value=jwt_token)
-
-        # mock repository methods
-        mock_user_repository.get_user = AsyncMock(return_value=sample_user)
-        mock_user_repository.update_user = AsyncMock(return_value=None)
+        mock_user_service.upsert_user = AsyncMock(return_value=sample_user)
         mock_transaction_manager.commit = AsyncMock()
 
         result = await interactor(sample_auth_tg_input_dto)
@@ -121,9 +86,72 @@ class TestAuthTgInteractor:
         assert isinstance(result, AuthTgOutputDTO)
         assert result.access_token == jwt_token
 
-        mock_auth_service.validate_init_data.assert_called_once()
-        mock_user_repository.get_user.assert_awaited_once()
-        mock_user_repository.update_user.assert_awaited_once()
-
+        mock_auth_service.validate_init_data.assert_called_once_with(
+            sample_auth_tg_input_dto.init_data
+        )
+        mock_user_service.upsert_user.assert_awaited_once()
         mock_transaction_manager.commit.assert_called_once()
-        mock_auth_service.create_access_token.assert_called_once()
+        mock_auth_service.create_access_token.assert_called_once_with(
+            sample_init_data_dto.user_id
+        )
+
+    async def test_auth_service_validate_exception_propagated(
+        self,
+        interactor,
+        mock_user_service,
+        mock_auth_service,
+        mock_transaction_manager,
+        sample_auth_tg_input_dto,
+    ):
+        mock_auth_service.validate_init_data = Mock(
+            side_effect=Exception("Invalid init data")
+        )
+
+        with pytest.raises(Exception) as exc_info:
+            await interactor(sample_auth_tg_input_dto)
+
+        assert "Invalid init data" in str(exc_info.value)
+        mock_user_service.upsert_user.assert_not_called()
+        mock_transaction_manager.commit.assert_not_called()
+
+    async def test_user_service_exception_propagated(
+        self,
+        interactor,
+        mock_user_service,
+        mock_auth_service,
+        mock_transaction_manager,
+        sample_auth_tg_input_dto,
+        sample_init_data_dto,
+    ):
+        mock_auth_service.validate_init_data = Mock(return_value=sample_init_data_dto)
+        mock_user_service.upsert_user = AsyncMock(
+            side_effect=Exception("Database error")
+        )
+
+        with pytest.raises(Exception) as exc_info:
+            await interactor(sample_auth_tg_input_dto)
+
+        assert "Database error" in str(exc_info.value)
+        mock_transaction_manager.commit.assert_not_called()
+
+    async def test_transaction_commit_exception_propagated(
+        self,
+        interactor,
+        mock_user_service,
+        mock_auth_service,
+        mock_transaction_manager,
+        sample_auth_tg_input_dto,
+        sample_init_data_dto,
+        sample_user,
+    ):
+        mock_auth_service.validate_init_data = Mock(return_value=sample_init_data_dto)
+        mock_user_service.upsert_user = AsyncMock(return_value=sample_user)
+        mock_transaction_manager.commit = AsyncMock(
+            side_effect=Exception("Commit failed")
+        )
+
+        with pytest.raises(Exception) as exc_info:
+            await interactor(sample_auth_tg_input_dto)
+
+        assert "Commit failed" in str(exc_info.value)
+        mock_auth_service.create_access_token.assert_not_called()

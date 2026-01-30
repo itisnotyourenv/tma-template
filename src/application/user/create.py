@@ -2,11 +2,8 @@ from dataclasses import dataclass
 
 from src.application.common.interactor import Interactor
 from src.application.common.transaction import TransactionManager
-from src.application.interfaces.auth import AuthService
-from src.domain.user import (
-    CreateUserDTO,
-    UserRepository,
-)
+from src.application.user.service import UpsertUserData, UserService
+from src.domain.user import UserRepository
 from src.domain.user.vo import UserId
 
 
@@ -16,8 +13,6 @@ class CreateUserInputDTO:
     username: str | None
     first_name: str
     last_name: str | None
-    is_premium: bool
-    photo_url: str | None
 
 
 @dataclass
@@ -32,40 +27,27 @@ class CreateUserOutputDTO:
 class CreateUserInteractor(Interactor[CreateUserInputDTO, CreateUserOutputDTO]):
     def __init__(
         self,
+        user_service: UserService,
         user_repository: UserRepository,
         transaction_manager: TransactionManager,
-        auth_service: AuthService,
     ) -> None:
+        self.user_service = user_service
         self.user_repository = user_repository
         self.transaction_manager = transaction_manager
-        self.auth_service = auth_service
 
     async def __call__(self, data: CreateUserInputDTO) -> CreateUserOutputDTO:
-        user_id = UserId(data.id)
+        # Check if user exists to determine is_new
+        existing_user = await self.user_repository.get_user(UserId(data.id))
+        is_new = existing_user is None
 
-        user = await self.user_repository.get_user(user_id)
-        is_new = user is None
-
-        if is_new:
-            user = await self.user_repository.create_user(
-                CreateUserDTO(
-                    id=data.id,
-                    username=data.username,
-                    first_name=data.first_name,
-                    last_name=data.last_name,
-                    is_premium=data.is_premium,
-                    photo_url=data.photo_url,
-                ),
-            )
-        else:
-            user = await self.user_repository.update_user(
-                user_id=user_id,
+        user = await self.user_service.upsert_user(
+            UpsertUserData(
+                id=data.id,
                 username=data.username,
                 first_name=data.first_name,
                 last_name=data.last_name,
-                is_premium=data.is_premium,
-                photo_url=data.photo_url,
             )
+        )
 
         await self.transaction_manager.commit()
 
