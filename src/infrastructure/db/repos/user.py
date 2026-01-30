@@ -1,11 +1,17 @@
 from datetime import UTC, datetime
 from typing import Unpack
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from src.domain.user.entity import User
-from src.domain.user.repository import CreateUserDTO, UpdateUserDTO, UserRepository
+from src.domain.user.repository import (
+    CreateUserDTO,
+    ReferralStats,
+    TopReferrer,
+    UpdateUserDTO,
+    UserRepository,
+)
 from src.domain.user.vo import UserId, Username
 from src.infrastructure.db.models.user import UserModel
 from src.infrastructure.db.repos.base import BaseSQLAlchemyRepo
@@ -81,3 +87,40 @@ class UserRepositoryImpl(UserRepository, BaseSQLAlchemyRepo):
             .values(referral_count=UserModel.referral_count + 1)
         )
         await self._session.execute(stmt)
+
+    async def get_referral_stats(self) -> ReferralStats:
+        total_query = select(func.count()).select_from(UserModel)
+        referred_query = (
+            select(func.count())
+            .select_from(UserModel)
+            .where(UserModel.referred_by.isnot(None))
+        )
+
+        total = (await self._session.execute(total_query)).scalar() or 0
+        referred = (await self._session.execute(referred_query)).scalar() or 0
+
+        return ReferralStats(
+            total_users=total,
+            referred_count=referred,
+            organic_count=total - referred,
+        )
+
+    async def get_top_referrers(self, limit: int = 10) -> list[TopReferrer]:
+        query = (
+            select(UserModel)
+            .where(UserModel.referral_count > 0)
+            .order_by(UserModel.referral_count.desc())
+            .limit(limit)
+        )
+        result = await self._session.execute(query)
+        users = result.scalars().all()
+
+        return [
+            TopReferrer(
+                user_id=int(u.id),
+                username=str(u.username) if u.username else None,
+                first_name=str(u.first_name),
+                referral_count=int(u.referral_count),
+            )
+            for u in users
+        ]
