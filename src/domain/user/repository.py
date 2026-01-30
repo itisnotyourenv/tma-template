@@ -44,10 +44,6 @@ class UserRepository(Protocol):
     async def delete_user(self, user_id: UserId) -> None: ...
 
     @abstractmethod
-    async def get_all_user_ids(self) -> list[int]:
-        raise NotImplementedError
-
-    @abstractmethod
     async def set_referred_by(self, user_id: UserId, referrer_id: UserId) -> None:
         raise NotImplementedError
 

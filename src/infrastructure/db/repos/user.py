@@ -61,11 +61,6 @@ class UserRepositoryImpl(UserRepository, BaseSQLAlchemyRepo):
     async def delete_user(self, user_id: UserId) -> None:
         raise NotImplementedError
 
-    async def get_all_user_ids(self) -> list[int]:
-        stmt = select(UserModel.id)
-        result = await self._session.execute(stmt)
-        return [row[0].value for row in result.fetchall()]
-
     async def set_referred_by(self, user_id: UserId, referrer_id: UserId) -> None:
         stmt = (
             update(UserModel)
