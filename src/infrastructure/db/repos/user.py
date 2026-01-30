@@ -1,12 +1,10 @@
-from datetime import UTC, datetime
-from typing import Unpack
-
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from src.domain.user.entity import User
-from src.domain.user.repository import CreateUserDTO, UpdateUserDTO, UserRepository
+from src.domain.user.repository import UserRepository
 from src.domain.user.vo import UserId, Username
+from src.infrastructure.db.mappers import UserMapper
 from src.infrastructure.db.models.user import UserModel
 from src.infrastructure.db.repos.base import BaseSQLAlchemyRepo
 
@@ -22,41 +20,43 @@ class UserRepositoryImpl(UserRepository, BaseSQLAlchemyRepo):
 
         user_model = result.scalars().first()
 
-        return user_model.to_domain() if user_model else None
+        return UserMapper.to_domain(user_model) if user_model else None
 
-    async def create_user(self, user: CreateUserDTO) -> User:
+    async def create_user(self, user: User) -> User:
         stmt = (
             insert(UserModel)
             .values(
-                id=user["id"],
-                username=user["username"],
-                first_name=user["first_name"],
-                last_name=user["last_name"],
+                id=user.id.value,
+                username=user.username.value if user.username else None,
+                first_name=user.first_name.value,
+                last_name=user.last_name.value if user.last_name else None,
+                created_at=user.created_at,
+                updated_at=user.updated_at,
+                last_login_at=user.last_login_at,
             )
             .returning(UserModel)
         )
 
         result = await self._session.execute(stmt)
         orm_model = result.scalar_one()
-        return orm_model.to_domain()
+        return UserMapper.to_domain(orm_model)
 
-    async def update_user(
-        self, user_id: UserId, **fields: Unpack[UpdateUserDTO]
-    ) -> User:
+    async def update_user(self, user: User) -> User:
         stmt = (
             update(UserModel)
-            .where(UserModel.id == user_id)
+            .where(UserModel.id == user.id.value)
             .values(
-                username=fields["username"],
-                first_name=fields["first_name"],
-                last_name=fields["last_name"],
-                last_login_at=datetime.now(UTC),
+                username=user.username.value if user.username else None,
+                first_name=user.first_name.value,
+                last_name=user.last_name.value if user.last_name else None,
+                updated_at=user.updated_at,
+                last_login_at=user.last_login_at,
             )
             .returning(UserModel)
         )
         result = await self._session.execute(stmt)
         orm_model = result.scalar_one()
-        return orm_model.to_domain()
+        return UserMapper.to_domain(orm_model)
 
     async def delete_user(self, user_id: UserId) -> None:
         raise NotImplementedError

@@ -9,9 +9,7 @@ class InitDataDTO:
     username: str | None
     first_name: str
     last_name: str | None
-    is_premium: bool
     start_param: str | None
-    photo_url: str
     ui_language_code: str | None
 
 

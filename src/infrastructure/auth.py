@@ -23,7 +23,7 @@ class AuthServiceImpl(AuthService):
             error_msg = f"Invalid init data '{init_data}'"
             raise InvalidInitDataError(message=error_msg) from err
 
-        if parsed_data.user is None or parsed_data.user.photo_url is None:
+        if parsed_data.user is None:
             error_msg = f"Invalid init data '{init_data}'"
             raise ValidationError(message=error_msg)
 
@@ -32,9 +32,7 @@ class AuthServiceImpl(AuthService):
             username=parsed_data.user.username,
             first_name=parsed_data.user.first_name,
             last_name=parsed_data.user.last_name,
-            is_premium=parsed_data.user.is_premium or False,
             start_param=parsed_data.start_param,
-            photo_url=parsed_data.user.photo_url,
             ui_language_code=parsed_data.user.language_code
             if parsed_data.user.language_code
             else None,

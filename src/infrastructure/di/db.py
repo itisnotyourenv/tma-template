@@ -1,11 +1,11 @@
 from collections.abc import AsyncIterable
 
-from dishka import Provider, Scope, provide
+from dishka import Provider, Scope, from_context, provide
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from src.application.common.transaction import TransactionManager
 from src.domain.user import UserRepository
-from src.infrastructure.config import PostgresConfig
+from src.infrastructure.config import Config
 from src.infrastructure.db.factory import create_engine, create_session_maker
 from src.infrastructure.db.holder import HolderDao
 from src.infrastructure.db.transaction import TransactionManagerImpl
@@ -14,13 +14,11 @@ from src.infrastructure.db.transaction import TransactionManagerImpl
 class DBProvider(Provider):
     scope = Scope.APP
 
-    def __init__(self, config: PostgresConfig) -> None:
-        self.config = config
-        super().__init__()
+    config = from_context(provides=Config)
 
     @provide(scope=Scope.APP)
-    async def get_engine(self) -> AsyncIterable[AsyncEngine]:
-        engine = create_engine(self.config)
+    async def get_engine(self, config: Config) -> AsyncIterable[AsyncEngine]:
+        engine = create_engine(config.postgres)
         yield engine
         await engine.dispose(close=True)
 

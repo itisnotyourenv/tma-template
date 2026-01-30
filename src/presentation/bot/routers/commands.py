@@ -22,8 +22,6 @@ async def command_start_handler(
             username=message.from_user.username,
             first_name=message.from_user.first_name,
             last_name=message.from_user.last_name,
-            is_premium=message.from_user.is_premium,
-            photo_url=None,
         )
     )
 
