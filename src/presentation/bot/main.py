@@ -8,24 +8,33 @@ from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramAPIError
 from dishka import make_async_container
 from dishka.integrations.aiogram import setup_dishka
+from fluentogram import TranslatorHub
 
 from src.infrastructure.config import Config, load_config
-from src.infrastructure.di import AuthProvider, DBProvider, interactor_providers
+from src.infrastructure.di import (
+    AuthProvider,
+    DBProvider,
+    I18nProvider,
+    interactor_providers,
+)
+from src.infrastructure.i18n import DEFAULT_LANGUAGE
 from src.presentation.bot.routers import setup_routers
 
 
-async def notify_admins_on_startup(bot: Bot, config: Config) -> None:
+async def notify_admins_on_startup(
+    bot: Bot, config: Config, hub: TranslatorHub
+) -> None:
     """Send notification to admins when bot starts up."""
+    i18n = hub.get_translator_by_locale(DEFAULT_LANGUAGE)
     for admin_id in config.telegram.admin_ids:
         try:
-            await bot.send_message(chat_id=admin_id, text="Bot has started!")
+            await bot.send_message(chat_id=admin_id, text=i18n.get("bot-started"))
         except TelegramAPIError as e:
             logging.warning("Failed to notify admin %s: %s", admin_id, e)
 
 
 async def main() -> None:
     config = load_config()
-    # Initialize Bot instance with default bot properties which will be passed to all API calls
     bot = Bot(
         token=config.telegram.bot_token,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
@@ -41,16 +50,18 @@ async def main() -> None:
 
     container = make_async_container(
         AuthProvider(),
-        DBProvider(config.postgres),  # todo - pass config with context
+        DBProvider(config.postgres),
+        I18nProvider(),
         *interactor_provider_instances,
         context={Config: config},
     )
     setup_dishka(container=container, router=dp)
 
-    # Notify admins on startup
-    await notify_admins_on_startup(bot, config)
+    # Get TranslatorHub for admin notification
+    async with container() as request_container:
+        hub = await request_container.get(TranslatorHub)
+        await notify_admins_on_startup(bot, config, hub)
 
-    # And the run events dispatching
     await dp.start_polling(bot, config=config)
 
 
