@@ -30,3 +30,29 @@ class Username(NonEmptyString):
 class Bio(NonEmptyString):
     min_length = 0
     max_length = 160
+
+
+class ReferralCount:
+    """Non-negative integer for referral count."""
+
+    def __init__(self, value: int) -> None:
+        if not isinstance(value, int):
+            raise TypeError("ReferralCount value must be an int")
+        if value < 0:
+            raise ValueError("ReferralCount cannot be negative")
+        self._value = value
+
+    @property
+    def value(self) -> int:
+        return self._value
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, ReferralCount):
+            return self._value == other._value
+        return False
+
+    def __hash__(self) -> int:
+        return hash(self._value)
+
+    def __repr__(self) -> str:
+        return f"ReferralCount({self._value})"

@@ -1,6 +1,6 @@
-from sqlalchemy import BIGINT, Dialect, String, TypeDecorator
+from sqlalchemy import BIGINT, INTEGER, Dialect, String, TypeDecorator
 
-from src.domain.user.vo import Bio, FirstName, LastName, UserId, Username
+from src.domain.user.vo import Bio, FirstName, LastName, ReferralCount, UserId, Username
 
 
 class UserIdType(TypeDecorator):
@@ -104,3 +104,24 @@ class BioType(TypeDecorator):
         if value is None:
             return None
         return Bio(value)
+
+
+class ReferralCountType(TypeDecorator):
+    impl = INTEGER
+    cache_ok = True
+
+    def process_bind_param(
+        self, value: ReferralCount | int | None, dialect: Dialect
+    ) -> int | None:
+        if value is None:
+            return None
+        if isinstance(value, ReferralCount):
+            return value.value
+        return value
+
+    def process_result_value(
+        self, value: int | None, dialect: Dialect
+    ) -> ReferralCount | None:
+        if value is None:
+            return None
+        return ReferralCount(value)

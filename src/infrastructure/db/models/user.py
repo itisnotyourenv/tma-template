@@ -1,13 +1,20 @@
 from datetime import datetime
 
-from sqlalchemy import TIMESTAMP, func
+from sqlalchemy import TIMESTAMP, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.domain.user.entity import User
-from src.domain.user.vo import Bio, FirstName, LastName, UserId, Username
+from src.domain.user.vo import Bio, FirstName, LastName, ReferralCount, UserId, Username
 
 from .base import BaseORMModel
-from .types.user import BioType, FirstNameType, LastNameType, UserIdType, UsernameType
+from .types.user import (
+    BioType,
+    FirstNameType,
+    LastNameType,
+    ReferralCountType,
+    UserIdType,
+    UsernameType,
+)
 
 
 class UserModel(BaseORMModel):
@@ -29,6 +36,12 @@ class UserModel(BaseORMModel):
     last_login_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), server_default=func.now()
     )
+    referred_by: Mapped[UserId | None] = mapped_column(
+        UserIdType, ForeignKey("users.id"), nullable=True
+    )
+    referral_count: Mapped[ReferralCount] = mapped_column(
+        ReferralCountType, nullable=False, server_default="0"
+    )
 
     def to_domain(self) -> User:
         return User(
@@ -40,6 +53,8 @@ class UserModel(BaseORMModel):
             created_at=self.created_at,
             updated_at=self.updated_at,
             last_login_at=self.last_login_at,
+            referred_by=self.referred_by,
+            referral_count=self.referral_count,
         )
 
     @classmethod
@@ -53,4 +68,6 @@ class UserModel(BaseORMModel):
             created_at=user.created_at,
             updated_at=user.updated_at,
             last_login_at=user.last_login_at,
+            referred_by=user.referred_by,
+            referral_count=user.referral_count,
         )

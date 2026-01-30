@@ -1,6 +1,6 @@
 import pytest
 
-from src.domain.user.vo import Bio, FirstName, LastName, UserId, Username
+from src.domain.user.vo import Bio, FirstName, LastName, ReferralCount, UserId, Username
 
 
 class TestUserId:
@@ -225,6 +225,33 @@ class TestBio:
     def test_invalid_type(self, invalid_value, expected_error):
         with pytest.raises(TypeError, match=expected_error):
             Bio(invalid_value)
+
+
+class TestReferralCount:
+    @pytest.mark.parametrize("value,expected", [(0, 0), (1, 1), (100, 100)])
+    def test_valid_referral_count(self, value, expected):
+        rc = ReferralCount(value)
+        assert rc.value == expected
+
+    def test_negative_value_raises(self):
+        with pytest.raises(ValueError):
+            ReferralCount(-1)
+
+    def test_invalid_type_raises(self):
+        with pytest.raises((TypeError, ValueError)):
+            ReferralCount("not a number")
+
+    def test_equality(self):
+        rc1 = ReferralCount(5)
+        rc2 = ReferralCount(5)
+        rc3 = ReferralCount(10)
+
+        assert rc1 == rc2
+        assert rc1 != rc3
+
+    def test_repr(self):
+        rc = ReferralCount(5)
+        assert repr(rc) == "ReferralCount(5)"
 
 
 class TestValueObjectsEquality:
