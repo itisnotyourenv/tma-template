@@ -19,12 +19,6 @@ class TestCreateUserInteractor:
         return Mock(spec=UserService)
 
     @pytest.fixture
-    def mock_user_repository(self):
-        repo = Mock()
-        repo.get_user = AsyncMock(return_value=None)
-        return repo
-
-    @pytest.fixture
     def mock_transaction_manager(self):
         return Mock()
 
@@ -32,12 +26,10 @@ class TestCreateUserInteractor:
     def interactor(
         self,
         mock_user_service,
-        mock_user_repository,
         mock_transaction_manager,
     ) -> CreateUserInteractor:
         return CreateUserInteractor(
             user_service=mock_user_service,
-            user_repository=mock_user_repository,
             transaction_manager=mock_transaction_manager,
         )
 

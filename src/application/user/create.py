@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from src.application.common.interactor import Interactor
 from src.application.common.transaction import TransactionManager
 from src.application.user.service import UpsertUserData, UserService
-from src.domain.user import UserRepository
 
 
 @dataclass
@@ -27,11 +26,9 @@ class CreateUserInteractor(Interactor[CreateUserInputDTO, CreateUserOutputDTO]):
     def __init__(
         self,
         user_service: UserService,
-        user_repository: UserRepository,
         transaction_manager: TransactionManager,
     ) -> None:
         self.user_service = user_service
-        self.user_repository = user_repository
         self.transaction_manager = transaction_manager
 
     async def __call__(self, data: CreateUserInputDTO) -> CreateUserOutputDTO:
