@@ -346,6 +346,38 @@ class TestCreateUserInteractor:
         assert isinstance(get_user_call_args, UserId)
         assert get_user_call_args.value == sample_create_user_input_dto.id
 
+    async def test_create_new_user_returns_is_new_true(
+        self,
+        interactor,
+        mock_user_repository,
+        mock_transaction_manager,
+        sample_create_user_input_dto,
+        sample_user,
+    ):
+        mock_user_repository.get_user = AsyncMock(return_value=None)
+        mock_user_repository.create_user = AsyncMock(return_value=sample_user)
+        mock_transaction_manager.commit = AsyncMock()
+
+        result = await interactor(sample_create_user_input_dto)
+
+        assert result.is_new is True
+
+    async def test_update_existing_user_returns_is_new_false(
+        self,
+        interactor,
+        mock_user_repository,
+        mock_transaction_manager,
+        sample_create_user_input_dto,
+        sample_user,
+    ):
+        mock_user_repository.get_user = AsyncMock(return_value=sample_user)
+        mock_user_repository.update_user = AsyncMock(return_value=sample_user)
+        mock_transaction_manager.commit = AsyncMock()
+
+        result = await interactor(sample_create_user_input_dto)
+
+        assert result.is_new is False
+
 
 class TestCreateUserInputDTO:
     def test_input_dto_creation(self):

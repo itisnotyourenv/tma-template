@@ -26,6 +26,7 @@ class CreateUserOutputDTO:
     username: str | None
     first_name: str
     last_name: str | None
+    is_new: bool = False
 
 
 class CreateUserInteractor(Interactor[CreateUserInputDTO, CreateUserOutputDTO]):
@@ -43,8 +44,9 @@ class CreateUserInteractor(Interactor[CreateUserInputDTO, CreateUserOutputDTO]):
         user_id = UserId(data.id)
 
         user = await self.user_repository.get_user(user_id)
+        is_new = user is None
 
-        if user is None:
+        if is_new:
             user = await self.user_repository.create_user(
                 CreateUserDTO(
                     id=data.id,
@@ -72,4 +74,5 @@ class CreateUserInteractor(Interactor[CreateUserInputDTO, CreateUserOutputDTO]):
             username=user.username.value if user.username else None,
             first_name=user.first_name.value,
             last_name=user.last_name.value if user.last_name else None,
+            is_new=is_new,
         )
