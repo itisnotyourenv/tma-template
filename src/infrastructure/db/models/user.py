@@ -3,7 +3,6 @@ from datetime import datetime
 from sqlalchemy import TIMESTAMP, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.domain.user.entity import User
 from src.domain.user.vo import Bio, FirstName, LastName, ReferralCount, UserId, Username
 
 from .base import BaseORMModel
@@ -42,32 +41,3 @@ class UserModel(BaseORMModel):
     referral_count: Mapped[ReferralCount] = mapped_column(
         ReferralCountType, nullable=False, server_default="0"
     )
-
-    def to_domain(self) -> User:
-        return User(
-            id=self.id,
-            first_name=self.first_name,
-            last_name=self.last_name,
-            username=self.username,
-            bio=self.bio,
-            created_at=self.created_at,
-            updated_at=self.updated_at,
-            last_login_at=self.last_login_at,
-            referred_by=self.referred_by,
-            referral_count=self.referral_count,
-        )
-
-    @classmethod
-    def from_domain(cls, user: User) -> "UserModel":
-        return cls(
-            id=user.id,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            username=user.username,
-            bio=user.bio,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-            last_login_at=user.last_login_at,
-            referred_by=user.referred_by,
-            referral_count=user.referral_count,
-        )
