@@ -15,7 +15,9 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from src.application.interfaces.auth import AuthService
 from src.domain.user.vo import UserId
+from src.infrastructure.auth import AuthServiceImpl
 from src.infrastructure.config import Config
 from src.infrastructure.db.models.base import BaseORMModel
 from src.infrastructure.di import (
@@ -90,8 +92,13 @@ async def create_worker_database(base_url: str, worker_url: str) -> None:
 
 
 @pytest.fixture(scope="session")
-def test_app(test_config: Config) -> Litestar:
-    app = prepare_app(test_config)
+def test_auth_service(test_config: Config) -> AuthService:
+    return AuthServiceImpl(test_config)
+
+
+@pytest.fixture(scope="session")
+def test_app(test_auth_service: AuthService) -> Litestar:
+    app = prepare_app(test_auth_service)
     app.debug = True
     return app
 
@@ -135,6 +142,7 @@ def authenticated_client(create_authenticated_client) -> tuple[AsyncClient, User
 @pytest.fixture(scope="session")
 async def dishka_container_for_tests(
     test_config: Config,
+    test_auth_service: AuthService,
     sqlalchemy_engine: AsyncEngine,
 ) -> AsyncGenerator[AsyncContainer]:
     await clear_db_data(sqlalchemy_engine)
@@ -157,7 +165,7 @@ async def dishka_container_for_tests(
         AuthProvider(),
         DBProvider(worker_postgres_config),
         *interactor_provider_instances,
-        context={Config: worker_config},
+        context={Config: worker_config, AuthService: test_auth_service},
     )
     yield container
     await container.close()
@@ -184,6 +192,7 @@ async def sqlalchemy_engine(test_config: Config) -> AsyncGenerator[AsyncEngine]:
 async def setup_db_schema(sqlalchemy_engine: AsyncEngine) -> None:
     """Create database schema once per session."""
     async with sqlalchemy_engine.begin() as conn:
+        await conn.run_sync(BaseORMModel.metadata.drop_all)
         await conn.run_sync(BaseORMModel.metadata.create_all)
 
 
