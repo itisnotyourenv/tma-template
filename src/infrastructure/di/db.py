@@ -4,6 +4,7 @@ from dishka import Provider, Scope, from_context, provide
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from src.application.common.transaction import TransactionManager
+from src.domain.admin import AdminRepository
 from src.domain.user import UserRepository
 from src.infrastructure.config import Config
 from src.infrastructure.db.factory import create_engine, create_session_maker
@@ -57,3 +58,10 @@ class DBProvider(Provider):
         holder_dao: HolderDao,
     ) -> UserRepository:
         return holder_dao.user_repo
+
+    @provide(scope=Scope.REQUEST)
+    async def get_admin_repository(
+        self,
+        holder_dao: HolderDao,
+    ) -> AdminRepository:
+        return holder_dao.admin_repo
