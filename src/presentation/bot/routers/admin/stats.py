@@ -34,7 +34,11 @@ async def stats_handler(
                 InlineKeyboardButton(
                     text=i18n.get("stats-top-inviters-btn"),
                     callback_data="ref_top",
-                )
+                ),
+                InlineKeyboardButton(
+                    text="Check Alive",
+                    callback_data="check_alive",
+                ),
             ]
         ]
     )
@@ -77,4 +81,46 @@ async def ref_top_callback(
         text += f"{i}. {name} — {ref.count}\n"
 
     await callback.message.edit_text(text=text)
+    await callback.answer()
+
+
+@router.callback_query(F.data == "admin:back_to_stats")
+@inject
+async def cb_back_to_stats(
+    callback: CallbackQuery,
+    hub: FromDishka[TranslatorHub],
+    interactor: FromDishka[GetStatsInteractor],
+) -> None:
+    """Return to stats view."""
+    locale = extract_language_code(callback.from_user.language_code)
+    i18n = hub.get_translator_by_locale(locale)
+
+    stats = await interactor()
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=i18n.get("stats-top-inviters-btn"),
+                    callback_data="ref_top",
+                ),
+                InlineKeyboardButton(
+                    text="Check Alive",
+                    callback_data="check_alive",
+                ),
+            ]
+        ]
+    )
+
+    await callback.message.edit_text(
+        text=i18n.get(
+            "stats-overview",
+            total=stats.total_users,
+            referred=stats.referred_count,
+            referred_pct=stats.referred_percent,
+            organic=stats.organic_count,
+            organic_pct=stats.organic_percent,
+        ),
+        reply_markup=keyboard,
+    )
     await callback.answer()
