@@ -18,7 +18,7 @@ from src.infrastructure.di import (
     interactor_providers,
 )
 from src.infrastructure.i18n import DEFAULT_LANGUAGE
-from src.infrastructure.i18n.middleware import I18nMiddleware
+from src.presentation.bot.middleware.user_and_locale import UserAndLocaleMiddleware
 from src.presentation.bot.routers import setup_routers
 
 
@@ -63,8 +63,8 @@ async def main() -> None:
         hub = await request_container.get(TranslatorHub)
 
         # Register I18n middleware
-        dp.message.middleware(I18nMiddleware(hub))
-        dp.callback_query.middleware(I18nMiddleware(hub))
+        dp.message.middleware(UserAndLocaleMiddleware())
+        dp.callback_query.middleware(UserAndLocaleMiddleware())
 
         await notify_admins_on_startup(bot, config, hub)
 

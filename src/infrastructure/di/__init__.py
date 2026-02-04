@@ -10,6 +10,7 @@ infra_providers = [
 ]
 
 __all__ = [
+    "AuthProvider",
     "DBProvider",
     "I18nProvider",
     "infra_providers",
