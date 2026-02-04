@@ -4,10 +4,9 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from src.application.user.create import (
-    CreateUserInputDTO,
     CreateUserInteractor,
-    CreateUserOutputDTO,
 )
+from src.application.user.dtos import CreateUserInputDTO, CreateUserOutputDTO
 from src.application.user.service import UserService
 from src.domain.user import User
 from src.domain.user.vo import Bio, FirstName, LastName, UserId, Username

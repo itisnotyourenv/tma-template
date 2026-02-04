@@ -21,3 +21,10 @@ class User:
     @property
     def is_new(self) -> bool:
         return self.created_at == self.last_login_at
+
+    def __str__(self) -> str:
+        return (
+            f"User(id={self.id}, username={self.username}, "
+            f"first_name={self.first_name}, last_name={self.last_name}, "
+            f"language_code={self.language_code}, is_new={self.is_new})"
+        )
