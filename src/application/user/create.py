@@ -19,6 +19,7 @@ class CreateUserOutputDTO:
     username: str | None
     first_name: str
     last_name: str | None
+    language_code: str | None = None
     is_new: bool = False
 
 
@@ -48,5 +49,6 @@ class CreateUserInteractor(Interactor[CreateUserInputDTO, CreateUserOutputDTO]):
             username=user.username.value if user.username else None,
             first_name=user.first_name.value,
             last_name=user.last_name.value if user.last_name else None,
+            language_code=user.language_code.value if user.language_code else None,
             is_new=user.is_new,
         )

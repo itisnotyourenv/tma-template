@@ -10,6 +10,10 @@ from src.application.referral.process import (
 )
 from src.application.user.create import CreateUserInputDTO, CreateUserInteractor
 from src.presentation.bot.utils.i18n import extract_language_code
+from src.presentation.bot.utils.markups.settings import (
+    get_onboarding_language_keyboard,
+    get_welcome_keyboard,
+)
 
 router = Router(name="commands")
 
@@ -43,7 +47,27 @@ async def command_start_handler(
             )
         )
 
-    locale = extract_language_code(message.from_user.language_code)
+    # New users: show onboarding language selection
+    if user.is_new:
+        # Use Telegram language for initial message, or English
+        locale = extract_language_code(message.from_user.language_code)
+        i18n = hub.get_translator_by_locale(locale)
+
+        await message.answer(
+            text=i18n.get("onboarding-language"),
+            reply_markup=get_onboarding_language_keyboard(),
+        )
+        return
+
+    # Returning users: show welcome with saved language (or Telegram language)
+    if user.language_code:
+        locale = user.language_code
+    else:
+        locale = extract_language_code(message.from_user.language_code)
+
     i18n = hub.get_translator_by_locale(locale)
 
-    await message.answer(text=i18n.get("welcome", name=user.first_name))
+    await message.answer(
+        text=i18n.get("welcome", name=user.first_name),
+        reply_markup=get_welcome_keyboard(i18n),
+    )

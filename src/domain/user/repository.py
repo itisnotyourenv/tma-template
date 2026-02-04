@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Protocol, overload
 
 from src.domain.user.entity import User
-from src.domain.user.vo import UserId, Username
+from src.domain.user.vo import LanguageCode, UserId, Username
 
 
 @dataclass
@@ -60,3 +60,9 @@ class UserRepository(Protocol):
     async def get_top_referrers(self, limit: int = 10) -> list[TopReferrer]:
         """Get top referrers by referral count."""
         ...
+
+    @abstractmethod
+    async def update_language(
+        self, user_id: UserId, language_code: LanguageCode
+    ) -> None:
+        raise NotImplementedError

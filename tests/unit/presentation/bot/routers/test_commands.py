@@ -61,7 +61,9 @@ class TestCommandStartHandler:
         self, mock_message: MagicMock, mock_command: MagicMock, hub: TranslatorHub
     ) -> None:
         mock_interactor = AsyncMock()
-        mock_interactor.return_value = MagicMock(first_name="John", is_new=False)
+        mock_interactor.return_value = MagicMock(
+            first_name="John", is_new=False, language_code=None
+        )
         mock_process_referral = AsyncMock()
 
         mock_container = self._create_mock_container(
@@ -83,7 +85,9 @@ class TestCommandStartHandler:
     ) -> None:
         mock_message.from_user.language_code = "ru"
         mock_interactor = AsyncMock()
-        mock_interactor.return_value = MagicMock(first_name="Иван", is_new=False)
+        mock_interactor.return_value = MagicMock(
+            first_name="Иван", is_new=False, language_code=None
+        )
         mock_process_referral = AsyncMock()
 
         mock_container = self._create_mock_container(
@@ -105,7 +109,9 @@ class TestCommandStartHandler:
     ) -> None:
         mock_message.from_user.language_code = "de"  # German not supported
         mock_interactor = AsyncMock()
-        mock_interactor.return_value = MagicMock(first_name="Hans", is_new=False)
+        mock_interactor.return_value = MagicMock(
+            first_name="Hans", is_new=False, language_code=None
+        )
         mock_process_referral = AsyncMock()
 
         mock_container = self._create_mock_container(

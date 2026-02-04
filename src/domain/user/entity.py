@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from .vo import Bio, FirstName, LastName, ReferralCount, UserId, Username
+from .vo import Bio, FirstName, LanguageCode, LastName, ReferralCount, UserId, Username
 
 
 @dataclass
@@ -16,6 +16,7 @@ class User:
     last_login_at: datetime
     referred_by: UserId | None = None
     referral_count: ReferralCount | None = None
+    language_code: LanguageCode | None = None
 
     @property
     def is_new(self) -> bool:

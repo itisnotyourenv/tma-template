@@ -18,6 +18,7 @@ from src.infrastructure.di import (
     interactor_providers,
 )
 from src.infrastructure.i18n import DEFAULT_LANGUAGE
+from src.infrastructure.i18n.middleware import I18nMiddleware
 from src.presentation.bot.routers import setup_routers
 
 
@@ -57,9 +58,14 @@ async def main() -> None:
     )
     setup_dishka(container=container, router=dp)
 
-    # Get TranslatorHub for admin notification
+    # Get TranslatorHub for middleware and admin notification
     async with container() as request_container:
         hub = await request_container.get(TranslatorHub)
+
+        # Register I18n middleware
+        dp.message.middleware(I18nMiddleware(hub))
+        dp.callback_query.middleware(I18nMiddleware(hub))
+
         await notify_admins_on_startup(bot, config, hub)
 
     await dp.start_polling(bot, config=config)

@@ -3,6 +3,7 @@ from dishka import Provider, Scope, provide
 from src.application.common.transaction import TransactionManager
 from src.application.user.create import CreateUserInteractor
 from src.application.user.get_me import GetUserProfileInteractor
+from src.application.user.interactors.update_language import UpdateLanguageInteractor
 from src.application.user.service import UserService
 from src.domain.user import UserRepository
 
@@ -34,5 +35,16 @@ class UserInteractorProvider(Provider):
     ) -> CreateUserInteractor:
         return CreateUserInteractor(
             user_service=user_service,
+            transaction_manager=transaction_manager,
+        )
+
+    @provide
+    def provide_update_language_interactor(
+        self,
+        user_repository: UserRepository,
+        transaction_manager: TransactionManager,
+    ) -> UpdateLanguageInteractor:
+        return UpdateLanguageInteractor(
+            user_repository=user_repository,
             transaction_manager=transaction_manager,
         )

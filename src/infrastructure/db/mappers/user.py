@@ -16,6 +16,7 @@ class UserMapper:
             last_login_at=model.last_login_at,
             referred_by=model.referred_by,
             referral_count=model.referral_count,
+            language_code=model.language_code,
         )
 
     @staticmethod
@@ -31,4 +32,5 @@ class UserMapper:
             last_login_at=user.last_login_at,
             referred_by=user.referred_by,
             referral_count=user.referral_count,
+            language_code=user.language_code,
         )
