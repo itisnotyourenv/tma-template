@@ -38,7 +38,7 @@ class UserAndLocaleMiddleware(BaseMiddleware):
         upsert_interactor = await container.get(CreateUserInteractor)
         hub = await container.get(TranslatorHub)
 
-        # Load user from DB (may be None for new users)
+        # Create or update user
         user_dto: CreateUserOutputDTO = await upsert_interactor(
             data=CreateUserInputDTO(
                 id=from_user.id,
