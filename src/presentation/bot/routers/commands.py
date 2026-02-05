@@ -53,7 +53,7 @@ async def command_start_handler(
     command: CommandObject,
     process_referral: FromDishka[ProcessReferralInteractor],
     i18n: TranslatorRunner,
-    user: CreateUserOutputDTO,  # can be None if the user is new
+    user: CreateUserOutputDTO,
 ) -> None:
     """Handle /start command."""
     if user.is_new:

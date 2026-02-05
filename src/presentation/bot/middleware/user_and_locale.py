@@ -30,7 +30,7 @@ class UserAndLocaleMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: dict[str, Any],
     ) -> Any:  # noqa: ANN401
-        from_user: AiogramUser = getattr(event, "from_user", None)
+        from_user: AiogramUser | None = getattr(event, "from_user", None)
         if from_user is None:
             return await handler(event, data)
 
