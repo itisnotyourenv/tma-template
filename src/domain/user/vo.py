@@ -56,3 +56,8 @@ class ReferralCount:
 
     def __repr__(self) -> str:
         return f"ReferralCount({self._value})"
+
+
+class LanguageCode(NonEmptyString):
+    min_length = 2
+    max_length = 5

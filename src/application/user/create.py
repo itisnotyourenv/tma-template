@@ -1,25 +1,11 @@
-from dataclasses import dataclass
-
 from src.application.common.interactor import Interactor
 from src.application.common.transaction import TransactionManager
+from src.application.user.dtos import (
+    CreateUserInputDTO,
+    CreateUserOutputDTO,
+    entity_to_dto,
+)
 from src.application.user.service import UpsertUserData, UserService
-
-
-@dataclass
-class CreateUserInputDTO:
-    id: int
-    username: str | None
-    first_name: str
-    last_name: str | None
-
-
-@dataclass
-class CreateUserOutputDTO:
-    id: int
-    username: str | None
-    first_name: str
-    last_name: str | None
-    is_new: bool = False
 
 
 class CreateUserInteractor(Interactor[CreateUserInputDTO, CreateUserOutputDTO]):
@@ -43,10 +29,4 @@ class CreateUserInteractor(Interactor[CreateUserInputDTO, CreateUserOutputDTO]):
 
         await self.transaction_manager.commit()
 
-        return CreateUserOutputDTO(
-            id=user.id.value,
-            username=user.username.value if user.username else None,
-            first_name=user.first_name.value,
-            last_name=user.last_name.value if user.last_name else None,
-            is_new=user.is_new,
-        )
+        return entity_to_dto(user)

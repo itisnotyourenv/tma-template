@@ -3,12 +3,21 @@ from datetime import datetime
 from sqlalchemy import TIMESTAMP, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.domain.user.vo import Bio, FirstName, LastName, ReferralCount, UserId, Username
+from src.domain.user.vo import (
+    Bio,
+    FirstName,
+    LanguageCode,
+    LastName,
+    ReferralCount,
+    UserId,
+    Username,
+)
 
 from .base import BaseORMModel
 from .types.user import (
     BioType,
     FirstNameType,
+    LanguageCodeType,
     LastNameType,
     ReferralCountType,
     UserIdType,
@@ -40,4 +49,7 @@ class UserModel(BaseORMModel):
     )
     referral_count: Mapped[ReferralCount] = mapped_column(
         ReferralCountType, nullable=False, server_default="0"
+    )
+    language_code: Mapped[LanguageCode | None] = mapped_column(
+        LanguageCodeType, server_default="en", nullable=True
     )

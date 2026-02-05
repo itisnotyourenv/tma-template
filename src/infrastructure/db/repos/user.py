@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from src.domain.user.entity import User
 from src.domain.user.repository import ReferralStats, TopReferrer, UserRepository
-from src.domain.user.vo import UserId, Username
+from src.domain.user.vo import LanguageCode, UserId, Username
 from src.infrastructure.db.mappers import UserMapper
 from src.infrastructure.db.models.user import UserModel
 from src.infrastructure.db.repos.base import BaseSQLAlchemyRepo
@@ -113,3 +113,13 @@ class UserRepositoryImpl(UserRepository, BaseSQLAlchemyRepo):
             )
             for u in users
         ]
+
+    async def update_language(
+        self, user_id: UserId, language_code: LanguageCode
+    ) -> None:
+        stmt = (
+            update(UserModel)
+            .where(UserModel.id == user_id)
+            .values(language_code=language_code)
+        )
+        await self._session.execute(stmt)
