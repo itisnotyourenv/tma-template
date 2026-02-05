@@ -58,8 +58,8 @@ async def main() -> None:
     )
     setup_dishka(container=container, router=dp)
 
-    # Get TranslatorHub for middleware and admin notification
     async with container() as request_container:
+        # Get TranslatorHub and admin notification
         hub = await request_container.get(TranslatorHub)
 
         # Register I18n middleware
