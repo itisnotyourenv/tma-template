@@ -15,7 +15,6 @@ async def edit_or_answer(
     try:
         if isinstance(update, types.CallbackQuery) and update.message:
             await update.message.edit_text(text, reply_markup=reply_markup)
-            await update.answer()  # Close loading state
         else:
             await update.answer(text, reply_markup=reply_markup)
     except TelegramBadRequest:
