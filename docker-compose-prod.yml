@@ -1,10 +1,9 @@
 version: '3.8'
-name: "production"
+name: "${COMPOSE_PROJECT_NAME_PROD}"
 
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: prod_postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}

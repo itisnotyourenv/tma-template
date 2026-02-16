@@ -73,7 +73,7 @@ cp config-example.yaml config-prod.yaml
 
 #### 5.2 Start all services
 ```shell
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose-prod.yml up -d
 ```
 
 This starts:
@@ -84,12 +84,12 @@ This starts:
 
 #### 5.3 View logs
 ```shell
-docker compose -f docker-compose.prod.yml logs -f
+docker compose -f docker-compose-prod.yml logs -f
 ```
 
 #### 5.4 Stop services
 ```shell
-docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose-prod.yml down
 ```
 
 # Setup Pre-Commit
