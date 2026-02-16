@@ -1,5 +1,5 @@
 version: '3.8'
-name: "test"
+name: "${COMPOSE_PROJECT_NAME_TEST}"
 
 services:
   postgres:
