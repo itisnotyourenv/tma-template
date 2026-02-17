@@ -5,12 +5,16 @@ WORKDIR /app
 RUN pip install uv
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen
+RUN uv sync --frozen --no-dev
 
 COPY . .
 
 ENV PYTHONPATH=/app/src
+ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-CMD ["uv", "run", "uvicorn", "src.presentation.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+COPY entrypoint-api.sh /entrypoint-api.sh
+RUN chmod +x /entrypoint-api.sh
+
+ENTRYPOINT ["/entrypoint-api.sh"]
