@@ -37,7 +37,7 @@ uv sync
 #### 3.1 Run tests
 ```shell
 docker compose -f docker-compose-test.yml up --build -d
-pytest
+uv run pytest
 docker compose -f docker-compose-test.yml down -v
 ```
 
@@ -50,17 +50,17 @@ docker compose up -d
 
 #### 4.2 Run migrations
 ```shell
-alembic upgrade head
+uv run alembic upgrade head
 ```
 
 #### 4.3 Run Litestar API
 ```shell
-uvicorn src.presentation.api.app:create_app --host 0.0.0.0 --port 8080
+uv run uvicorn src.presentation.api.app:create_app --host 0.0.0.0 --port 8080
 ```
 
 #### 4.4 Run Telegram Bot
 ```shell
-python -m src.presentation.bot.main
+uv run python -m src.presentation.bot.main
 ```
 
 ## 5. Production Deployment

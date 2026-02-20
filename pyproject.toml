@@ -27,6 +27,7 @@ dependencies = [
     "sqlalchemy>=2.0.41",
     "ty>=0.0.1a16",
     "uvicorn>=0.35.0",
+    "gunicorn>=23.0.0",
     "pytest-timeout>=2.4.0",
     "pytest-sugar>=1.1.1",
     "pytest-randomly>=3.16.0",
