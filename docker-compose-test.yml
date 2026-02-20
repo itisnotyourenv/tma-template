@@ -1,9 +1,10 @@
-name: "test"
+version: '3.8'
+name: "${COMPOSE_PROJECT_NAME_TEST}"
+
 
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: ${PG_TEST_CONTAINER_NAME}
     environment:
       POSTGRES_DB: ${POSTGRES_TEST_DB}
       POSTGRES_USER: ${POSTGRES_TEST_USER}
