@@ -1,4 +1,3 @@
-version: '3.8'
 name: "production"
 
 services:
@@ -44,6 +43,8 @@ services:
       dockerfile: Dockerfile.api
     ports:
       - "8000:8000"
+    environment:
+      API_WORKERS: ${API_WORKERS}
     volumes:
       - ./config-prod.yaml:/app/config.yaml:ro
     depends_on:

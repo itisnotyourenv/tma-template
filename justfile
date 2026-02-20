@@ -1,3 +1,6 @@
+set shell := ["bash", "-cu"]
+set windows-shell := ["cmd.exe", "/c"]
+
 # Docker Compose shortcuts
 up:
     docker-compose up -d
@@ -46,19 +49,19 @@ status:
     docker-compose ps
 
 api:
-    uvicorn src.presentation.api.app:create_app --factory --port 8080 --reload
+    uv run uvicorn src.presentation.api.app:create_app --factory --port 8080 --reload
 
 bot:
-    python -m src.presentation.bot.main
+    uv run python -m src.presentation.bot.main
 
 test:
     docker compose -f docker-compose-test.yml up -d
-    pytest -n auto -ss -vv --maxfail=1
+    uv run pytest -n auto -ss -vv --maxfail=1
     docker compose -f docker-compose-test.yml down -v
 
 test-db-up:
     docker compose -f docker-compose-test.yml up --build -d
 
 lint:
-    ruff format src tests
-    ruff check src tests --fix
+    uv run ruff format src tests
+    uv run ruff check src tests --fix
