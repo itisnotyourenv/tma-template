@@ -45,13 +45,13 @@ async def main() -> None:
         interactor() for interactor in interactor_providers
     ]
 
-    dp = Dispatcher()
+    dp = Dispatcher(config=config)
     main_router = setup_routers()
     dp.include_router(main_router)
 
     container = make_async_container(
         AuthProvider(),
-        DBProvider(config.postgres),
+        DBProvider(),
         I18nProvider(),
         *interactor_provider_instances,
         context={Config: config},
@@ -68,7 +68,7 @@ async def main() -> None:
 
         await notify_admins_on_startup(bot, config, hub)
 
-    await dp.start_polling(bot, config=config)
+    await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
