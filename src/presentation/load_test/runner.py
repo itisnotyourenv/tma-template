@@ -38,13 +38,13 @@ async def setup_dispatcher(config: Config) -> tuple[Dispatcher, Bot]:
         interactor() for interactor in interactor_providers
     ]
 
-    dp = Dispatcher()
+    dp = Dispatcher(config=config)
     main_router = setup_routers()
     dp.include_router(main_router)
 
     container = make_async_container(
         AuthProvider(),
-        DBProvider(config.postgres),
+        DBProvider(),
         I18nProvider(),
         *interactor_provider_instances,
         context={Config: config},
