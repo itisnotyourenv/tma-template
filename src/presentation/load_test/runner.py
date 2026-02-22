@@ -30,7 +30,7 @@ from src.presentation.bot.middleware.user_and_locale import UserAndLocaleMiddlew
 from src.presentation.bot.routers import setup_routers
 from src.presentation.load_test.handlers import get_handler
 from src.presentation.load_test.metrics import LoadTestMetrics
-from src.presentation.load_test.report import format_report, save_report
+from src.presentation.load_test.report import format_report, print_report, save_report
 from src.presentation.load_test.session import NoOpSession
 
 logger = logging.getLogger(__name__)
@@ -142,6 +142,16 @@ async def run_load_test(
 
     wall_elapsed = time.perf_counter() - wall_start
 
+    # Rich output to console
+    print_report(
+        metrics=metrics,
+        test_name=test_name,
+        wall_elapsed=wall_elapsed,
+        handler=handler,
+        concurrency=concurrency,
+    )
+
+    # Plain text to file
     report_text = format_report(
         metrics=metrics,
         test_name=test_name,
@@ -149,7 +159,8 @@ async def run_load_test(
         handler=handler,
         concurrency=concurrency,
     )
-    print(report_text)
-
     filepath = save_report(report_text, test_name)
-    print(f"\nReport saved: {filepath}")
+
+    from rich.console import Console
+
+    Console().print(f"\nReport saved: [bold green]{filepath}[/bold green]")
