@@ -8,6 +8,16 @@ from aiogram.enums import ParseMode
 from aiogram.types import Update
 from dishka import make_async_container
 from dishka.integrations.aiogram import setup_dishka
+from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    SpinnerColumn,
+    TaskProgressColumn,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
 
 from src.infrastructure.config import Config, load_config
 from src.infrastructure.di import (
@@ -24,6 +34,10 @@ from src.presentation.load_test.report import format_report, save_report
 from src.presentation.load_test.session import NoOpSession
 
 logger = logging.getLogger(__name__)
+
+# Suppress aiogram INFO logs during the test so the progress bar stays clean
+aiogram_logger = logging.getLogger("aiogram.event")
+aiogram_logger.setLevel(logging.WARNING)
 
 
 async def setup_dispatcher(config: Config) -> tuple[Dispatcher, Bot]:
@@ -63,6 +77,8 @@ async def _process_single_update(
     update: Update,
     metrics: LoadTestMetrics,
     semaphore: asyncio.Semaphore,
+    progress: Progress,
+    task_id,
 ) -> None:
     """Process a single Update and record metrics."""
     async with semaphore:
@@ -75,6 +91,8 @@ async def _process_single_update(
             elapsed = time.perf_counter() - start
             metrics.record_error(e, elapsed)
             logger.error("Update %s failed: %s", update.update_id, e)
+        finally:
+            progress.advance(task_id)
 
 
 async def run_load_test(
@@ -100,18 +118,27 @@ async def run_load_test(
         for i in range(total_updates)
     ]
 
-    print(
-        f"\nStarting: {total_updates} updates, "
-        f"concurrency={concurrency}, handler={handler}"
+    progress = Progress(
+        SpinnerColumn(),
+        TextColumn("[bold blue]{task.description}"),
+        BarColumn(bar_width=40),
+        TaskProgressColumn(),
+        MofNCompleteColumn(),
+        TimeElapsedColumn(),
+        TimeRemainingColumn(),
     )
-    print(f"Test: {test_name}")
-    wall_start = time.perf_counter()
 
-    tasks = [
-        _process_single_update(dp, bot, update, metrics, semaphore)
-        for update in updates
-    ]
-    await asyncio.gather(*tasks)
+    with progress:
+        task_id = progress.add_task(f"[{handler}]", total=total_updates)
+        wall_start = time.perf_counter()
+
+        tasks = [
+            _process_single_update(
+                dp, bot, update, metrics, semaphore, progress, task_id
+            )
+            for update in updates
+        ]
+        await asyncio.gather(*tasks)
 
     wall_elapsed = time.perf_counter() - wall_start
 
