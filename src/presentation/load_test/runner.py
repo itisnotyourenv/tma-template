@@ -8,6 +8,7 @@ from aiogram.enums import ParseMode
 from aiogram.types import Update
 from dishka import make_async_container
 from dishka.integrations.aiogram import setup_dishka
+from rich.console import Console
 from rich.progress import (
     BarColumn,
     MofNCompleteColumn,
@@ -160,7 +161,5 @@ async def run_load_test(
         concurrency=concurrency,
     )
     filepath = save_report(report_text, test_name)
-
-    from rich.console import Console
 
     Console().print(f"\nReport saved: [bold green]{filepath}[/bold green]")
