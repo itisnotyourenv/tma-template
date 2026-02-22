@@ -3,7 +3,7 @@ import logging
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 from dishka.integrations.aiogram import FromDishka, inject
-from fluentogram import TranslatorHub, TranslatorRunner
+from fluentogram import TranslatorHub
 
 from src.application.user.interactors.update_language import (
     UpdateLanguageDTO,
@@ -11,6 +11,7 @@ from src.application.user.interactors.update_language import (
 )
 from src.domain.user import UserRepository
 from src.domain.user.vo import LanguageCode, UserId
+from src.infrastructure.i18n.types import TranslatorRunner
 from src.presentation.bot.utils import edit_or_answer
 from src.presentation.bot.utils.cb_data import (
     LanguageCBData,

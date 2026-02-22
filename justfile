@@ -65,3 +65,7 @@ test-db-up:
 lint:
     uv run ruff format src tests
     uv run ruff check src tests --fix
+
+generate-i18n:
+    uv run python scripts/generate_i18n_stubs.py
+    uv run ruff format src/infrastructure/i18n/types.py

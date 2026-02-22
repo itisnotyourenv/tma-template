@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from fluentogram import TranslatorRunner
 
 from src.domain.user.vo import LanguageCode
+from src.infrastructure.i18n.types import TranslatorRunner
 from src.presentation.bot.utils.cb_data import (
     LanguageCBCode,
     LanguageCBData,

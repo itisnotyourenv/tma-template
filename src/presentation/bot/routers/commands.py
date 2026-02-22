@@ -2,13 +2,13 @@ from aiogram import Router
 from aiogram.filters import CommandObject, CommandStart
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
-from fluentogram import TranslatorRunner
 
 from src.application.referral.process import (
     ProcessReferralInputDTO,
     ProcessReferralInteractor,
 )
 from src.application.user.dtos import CreateUserOutputDTO
+from src.infrastructure.i18n.types import TranslatorRunner
 from src.presentation.bot.utils.markups.settings import (
     get_onboarding_language_keyboard,
     get_welcome_keyboard,
