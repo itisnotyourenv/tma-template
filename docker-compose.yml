@@ -1,9 +1,9 @@
-name: "main"
+name: ${APP_NAME}_local
 
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: ${PG_CONTAINER_NAME}
+    container_name: ${APP_NAME}_local_postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}

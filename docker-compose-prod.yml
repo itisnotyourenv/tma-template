@@ -1,9 +1,9 @@
-name: "production"
+name: ${APP_NAME}_prod
 
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: prod_postgres
+    container_name: ${APP_NAME}_prod_postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
