@@ -26,6 +26,7 @@ dependencies = [
     "ruff>=0.12.5",
     "sqlalchemy>=2.0.41",
     "ty>=0.0.1a16",
+    "typer>=0.15.0",
     "uvicorn>=0.35.0",
     "gunicorn>=23.0.0",
     "pytest-timeout>=2.4.0",
@@ -150,6 +151,7 @@ lint.ignore = [
 [tool.ruff.lint.per-file-ignores]
 # Test files
 "tests/*" = ["S101", "S105", "S106", "ANN", "PLR2004", "SIM117"]
+"src/presentation/load_test/*" = ["ANN", "S", "PLR2004", "ASYNC109", "PLC0415"]
 # Migration files
 "**/migrations/*" = ["ANN", "N806"]
 # Configuration files
@@ -190,4 +192,5 @@ max-statements = 50
 [tool.coverage.run]
 omit = [
     "src/presentation/bot/main.py",
+    "src/presentation/load_test/*",
 ]

@@ -19,5 +19,8 @@ config-local.yaml
 coverage.xml
 .env
 
+# Load test reports
+src/presentation/load_test/reports/
+
 # Git worktrees
 .worktrees/
