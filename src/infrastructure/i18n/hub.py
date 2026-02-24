@@ -48,4 +48,4 @@ def create_translator_hub(locale_dir: Path | None = None) -> TranslatorHub:
         "ru": ("ru", "en"),
     }
 
-    return TranslatorHub(locale_map, translators, root_locale="en")
+    return TranslatorHub(locale_map, translators, root_locale="en", separator="_")

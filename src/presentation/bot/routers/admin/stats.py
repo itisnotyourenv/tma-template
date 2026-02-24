@@ -32,7 +32,7 @@ async def stats_handler(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text=i18n.get("stats-top-inviters-btn"),
+                    text=i18n.get("stats_top_inviters_btn"),
                     callback_data="ref_top",
                 ),
                 InlineKeyboardButton(
@@ -45,7 +45,7 @@ async def stats_handler(
 
     await message.answer(
         text=i18n.get(
-            "stats-overview",
+            "stats_overview",
             total=stats.total_users,
             referred=stats.referred_count,
             referred_pct=stats.referred_percent,
@@ -71,11 +71,11 @@ async def ref_top_callback(
     top = await interactor(limit)
 
     if not top:
-        await callback.message.edit_text(text=i18n.get("stats-no-inviters"))
+        await callback.message.edit_text(text=i18n.get("stats_no_inviters"))
         await callback.answer()
         return
 
-    text = i18n.get("stats-top-inviters-header", limit=limit) + "\n\n"
+    text = i18n.get("stats_top_inviters_header", limit=limit) + "\n\n"
     for i, ref in enumerate(top, 1):
         name = f"@{ref.username}" if ref.username else ref.first_name
         text += f"{i}. {name} — {ref.count}\n"
@@ -101,7 +101,7 @@ async def cb_back_to_stats(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text=i18n.get("stats-top-inviters-btn"),
+                    text=i18n.get("stats_top_inviters_btn"),
                     callback_data="ref_top",
                 ),
                 InlineKeyboardButton(
@@ -114,7 +114,7 @@ async def cb_back_to_stats(
 
     await callback.message.edit_text(
         text=i18n.get(
-            "stats-overview",
+            "stats_overview",
             total=stats.total_users,
             referred=stats.referred_count,
             referred_pct=stats.referred_percent,

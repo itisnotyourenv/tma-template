@@ -1,20 +1,20 @@
-stats-overview =
+stats_overview =
     📊 Statistics
 
     Total users: { $total }
     Referred: { $referred } ({ $referred_pct }%)
     Organic: { $organic } ({ $organic_pct }%)
 
-stats-top-inviters-btn = 🏆 Top inviters
+stats_top_inviters_btn = 🏆 Top inviters
 
-stats-top-inviters-header = 🏆 Top { $limit } inviters:
+stats_top_inviters_header = 🏆 Top { $limit } inviters:
 
-stats-no-inviters = No inviters yet
+stats_no_inviters = No inviters yet
 
-referral-info =
+referral_info =
     🔗 Your referral link:
     { $link }
 
     👥 Invited users: { $count }
 
-referral-user-not-found = User not found. Please use /start first.
+referral_user_not_found = User not found. Please use /start first.

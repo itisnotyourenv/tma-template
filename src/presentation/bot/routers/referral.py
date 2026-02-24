@@ -9,6 +9,7 @@ from src.application.referral.get_info import (
     GetReferralInfoInteractor,
 )
 from src.infrastructure.config import Config
+from src.infrastructure.i18n import TranslatorRunner
 from src.presentation.bot.utils.i18n import extract_language_code
 
 router = Router(name="referral")
@@ -24,20 +25,20 @@ async def referral_handler(
 ) -> None:
     """Show user's referral link and statistics."""
     locale = extract_language_code(message.from_user.language_code)
-    i18n = hub.get_translator_by_locale(locale)
+    i18n: TranslatorRunner = hub.get_translator_by_locale(locale)
 
     user_id = message.from_user.id
     info = await get_referral_info(GetReferralInfoInputDTO(user_id=user_id))
 
     if info is None:
-        await message.answer(text=i18n.get("referral-user-not-found"))
+        await message.answer(text=i18n.get("referral_user_not_found"))
         return
 
     bot_username = config.telegram.bot_username
     referral_link = f"https://t.me/{bot_username}?start=ref_{info.referral_code}"
 
     text = i18n.get(
-        "referral-info",
+        "referral_info",
         link=referral_link,
         count=info.referral_count,
     )

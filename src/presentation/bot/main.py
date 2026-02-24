@@ -29,7 +29,7 @@ async def notify_admins_on_startup(
     i18n = hub.get_translator_by_locale(DEFAULT_LANGUAGE)
     for admin_id in config.telegram.admin_ids:
         try:
-            await bot.send_message(chat_id=admin_id, text=i18n.get("bot-started"))
+            await bot.send_message(chat_id=admin_id, text=i18n.get("bot_started"))
         except TelegramAPIError as e:
             logging.warning("Failed to notify admin %s: %s", admin_id, e)
 
