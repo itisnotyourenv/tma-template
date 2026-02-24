@@ -41,7 +41,7 @@ async def _start_onboarding(
 ) -> None:
     """Start onboarding by asking user to select language."""
     await message.answer(
-        text=i18n.get("onboarding_language"),
+        text=i18n.onboarding_language(),
         reply_markup=get_onboarding_language_keyboard(),
     )
 
@@ -66,6 +66,6 @@ async def command_start_handler(
         return
 
     await message.answer(
-        text=i18n.get("welcome", name=user.first_name),
+        text=i18n.welcome(name=user.first_name),
         reply_markup=get_welcome_keyboard(i18n),
     )
