@@ -104,6 +104,40 @@ class TestPostgresConfig:
         with pytest.raises(ValidationError):
             PostgresConfig()
 
+    def test_pool_defaults(self):
+        config = PostgresConfig(
+            host="localhost", port=5432, user="user", password="pass", db="db"
+        )
+
+        assert config.pool_size == 30
+        assert config.pool_timeout == 30
+        assert config.pool_recycle == 3600
+        assert config.max_overflow == 20
+        assert config.pool_pre_ping is True
+        assert config.echo_pool is False
+
+    def test_pool_custom_values(self):
+        config = PostgresConfig(
+            host="localhost",
+            port=5432,
+            user="user",
+            password="pass",
+            db="db",
+            pool_size=10,
+            pool_timeout=15,
+            pool_recycle=1800,
+            max_overflow=5,
+            pool_pre_ping=False,
+            echo_pool=True,
+        )
+
+        assert config.pool_size == 10
+        assert config.pool_timeout == 15
+        assert config.pool_recycle == 1800
+        assert config.max_overflow == 5
+        assert config.pool_pre_ping is False
+        assert config.echo_pool is True
+
     @pytest.mark.parametrize(
         "port,echo,should_raise",
         [

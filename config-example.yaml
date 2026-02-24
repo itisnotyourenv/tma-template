@@ -9,6 +9,12 @@ postgres:
   user: "tma_user"
   password: "tma_password"
   db: "tma_db"
+  # pool_size: 30
+  # pool_timeout: 30
+  # pool_recycle: 3600
+  # max_overflow: 20
+  # pool_pre_ping: true
+  # echo_pool: false
 
 auth:
   secret_key: "secret"
