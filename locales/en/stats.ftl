@@ -6,6 +6,7 @@ stats_overview =
     Organic: { $organic } ({ $organic_pct }%)
 
 stats_top_inviters_btn = 🏆 Top inviters
+check_alive_btn = 🫀 Check alive
 
 stats_top_inviters_header = 🏆 Top { $limit } inviters:
 

@@ -6,6 +6,7 @@ stats_overview =
     Органика: { $organic } ({ $organic_pct }%)
 
 stats_top_inviters_btn = 🏆 Топ инвайтеров
+check_alive_btn = 🫀 Живые юзеры
 
 stats_top_inviters_header = 🏆 Топ-{ $limit } инвайтеров:
 
