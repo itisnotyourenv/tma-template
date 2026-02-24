@@ -18,26 +18,32 @@ router = Router(name="admin_stats")
 
 
 @router.message(Command("stats"))
+@router.callback_query(F.data == "admin:back_to_stats")
 @inject
 async def stats_handler(
-    message: Message,
+    update: Message | CallbackQuery,
     i18n: TranslatorRunner,
     interactor: FromDishka[GetStatsInteractor],
 ) -> None:
     """Handle /stats admin command."""
-    logger.info("Admin %s requested stats", message.from_user.id)
+    logger.info("Admin %s requested stats", update.from_user.id)
     stats = await interactor()
 
-    await message.answer(
-        text=i18n.stats_overview(
+    kwargs = {
+        "text": i18n.stats_overview(
             total=stats.total_users,
             referred=stats.referred_count,
             referred_pct=stats.referred_percent,
             organic=stats.organic_count,
             organic_pct=stats.organic_percent,
         ),
-        reply_markup=stats_main_markup(i18n),
-    )
+        "reply_markup": stats_main_markup(i18n),
+    }
+
+    if isinstance(update, CallbackQuery):
+        await update.message.edit_text(**kwargs)
+    else:
+        await update.answer(**kwargs)
 
 
 @router.callback_query(F.data == "ref_top")
@@ -64,29 +70,4 @@ async def ref_top_callback(
         text += f"{i}. {name} — {ref.count}\n"
 
     await callback.message.edit_text(text=text)
-    await callback.answer()
-
-
-@router.callback_query(F.data == "admin:back_to_stats")
-@inject
-async def cb_back_to_stats(
-    callback: CallbackQuery,
-    interactor: FromDishka[GetStatsInteractor],
-    i18n: TranslatorRunner,
-) -> None:
-    """Return to stats view."""
-    logger.info("Admin %s returned to stats view", callback.from_user.id)
-    stats = await interactor()
-
-    await callback.message.edit_text(
-        text=i18n.get(
-            "stats_overview",
-            total=stats.total_users,
-            referred=stats.referred_count,
-            referred_pct=stats.referred_percent,
-            organic=stats.organic_count,
-            organic_pct=stats.organic_percent,
-        ),
-        reply_markup=stats_main_markup(i18n),
-    )
     await callback.answer()

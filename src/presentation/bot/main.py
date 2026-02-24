@@ -17,7 +17,7 @@ from src.infrastructure.di import (
     I18nProvider,
     interactor_providers,
 )
-from src.infrastructure.i18n import DEFAULT_LANGUAGE
+from src.infrastructure.i18n import DEFAULT_LANGUAGE, TranslatorRunner
 from src.presentation.bot.middleware.user_and_locale import UserAndLocaleMiddleware
 from src.presentation.bot.routers import setup_routers
 
@@ -26,10 +26,10 @@ async def notify_admins_on_startup(
     bot: Bot, config: Config, hub: TranslatorHub
 ) -> None:
     """Send notification to admins when bot starts up."""
-    i18n = hub.get_translator_by_locale(DEFAULT_LANGUAGE)
+    i18n: TranslatorRunner = hub.get_translator_by_locale(DEFAULT_LANGUAGE)
     for admin_id in config.telegram.admin_ids:
         try:
-            await bot.send_message(chat_id=admin_id, text=i18n.get("bot_started"))
+            await bot.send_message(chat_id=admin_id, text=i18n.bot_started())
         except TelegramAPIError as e:
             logging.warning("Failed to notify admin %s: %s", admin_id, e)
 
