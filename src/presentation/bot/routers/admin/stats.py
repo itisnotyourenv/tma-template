@@ -1,126 +1,73 @@
+import logging
+
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import (
     CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
     Message,
 )
 from dishka.integrations.aiogram import FromDishka, inject
-from fluentogram import TranslatorHub
 
 from src.application.referral.stats import GetStatsInteractor, GetTopReferrersInteractor
-from src.presentation.bot.utils.i18n import extract_language_code
+from src.infrastructure.i18n import TranslatorRunner
+from src.presentation.bot.utils.markups.admin import stats_main_markup
+
+logger = logging.getLogger(__name__)
 
 router = Router(name="admin_stats")
 
 
 @router.message(Command("stats"))
+@router.callback_query(F.data == "admin:back_to_stats")
 @inject
 async def stats_handler(
-    message: Message,
-    hub: FromDishka[TranslatorHub],
+    update: Message | CallbackQuery,
+    i18n: TranslatorRunner,
     interactor: FromDishka[GetStatsInteractor],
 ) -> None:
     """Handle /stats admin command."""
-    locale = extract_language_code(message.from_user.language_code)
-    i18n = hub.get_translator_by_locale(locale)
-
+    logger.info("Admin %s requested stats", update.from_user.id)
     stats = await interactor()
 
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=i18n.get("stats-top-inviters-btn"),
-                    callback_data="ref_top",
-                ),
-                InlineKeyboardButton(
-                    text="Check Alive",
-                    callback_data="check_alive",
-                ),
-            ]
-        ]
-    )
-
-    await message.answer(
-        text=i18n.get(
-            "stats-overview",
+    kwargs = {
+        "text": i18n.stats_overview(
             total=stats.total_users,
             referred=stats.referred_count,
             referred_pct=stats.referred_percent,
             organic=stats.organic_count,
             organic_pct=stats.organic_percent,
         ),
-        reply_markup=keyboard,
-    )
+        "reply_markup": stats_main_markup(i18n),
+    }
+
+    if isinstance(update, CallbackQuery):
+        await update.message.edit_text(**kwargs)
+    else:
+        await update.answer(**kwargs)
 
 
 @router.callback_query(F.data == "ref_top")
 @inject
 async def ref_top_callback(
     callback: CallbackQuery,
-    hub: FromDishka[TranslatorHub],
+    i18n: TranslatorRunner,
     interactor: FromDishka[GetTopReferrersInteractor],
 ) -> None:
     """Handle top referrers callback."""
-    locale = extract_language_code(callback.from_user.language_code)
-    i18n = hub.get_translator_by_locale(locale)
+    logger.info("Admin %s requested top referrers", callback.from_user.id)
 
     limit = 10
     top = await interactor(limit)
 
     if not top:
-        await callback.message.edit_text(text=i18n.get("stats-no-inviters"))
+        await callback.message.edit_text(text=i18n.stats_no_inviters())
         await callback.answer()
         return
 
-    text = i18n.get("stats-top-inviters-header", limit=limit) + "\n\n"
+    text = i18n.stats_top_inviters_header(limit=limit) + "\n\n"
     for i, ref in enumerate(top, 1):
         name = f"@{ref.username}" if ref.username else ref.first_name
         text += f"{i}. {name} — {ref.count}\n"
 
     await callback.message.edit_text(text=text)
-    await callback.answer()
-
-
-@router.callback_query(F.data == "admin:back_to_stats")
-@inject
-async def cb_back_to_stats(
-    callback: CallbackQuery,
-    hub: FromDishka[TranslatorHub],
-    interactor: FromDishka[GetStatsInteractor],
-) -> None:
-    """Return to stats view."""
-    locale = extract_language_code(callback.from_user.language_code)
-    i18n = hub.get_translator_by_locale(locale)
-
-    stats = await interactor()
-
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=i18n.get("stats-top-inviters-btn"),
-                    callback_data="ref_top",
-                ),
-                InlineKeyboardButton(
-                    text="Check Alive",
-                    callback_data="check_alive",
-                ),
-            ]
-        ]
-    )
-
-    await callback.message.edit_text(
-        text=i18n.get(
-            "stats-overview",
-            total=stats.total_users,
-            referred=stats.referred_count,
-            referred_pct=stats.referred_percent,
-            organic=stats.organic_count,
-            organic_pct=stats.organic_percent,
-        ),
-        reply_markup=keyboard,
-    )
     await callback.answer()

@@ -2,13 +2,13 @@ from aiogram import Router
 from aiogram.filters import CommandObject, CommandStart
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
-from fluentogram import TranslatorRunner
 
 from src.application.referral.process import (
     ProcessReferralInputDTO,
     ProcessReferralInteractor,
 )
 from src.application.user.dtos import CreateUserOutputDTO
+from src.infrastructure.i18n import TranslatorRunner
 from src.presentation.bot.utils.markups.settings import (
     get_onboarding_language_keyboard,
     get_welcome_keyboard,
@@ -41,7 +41,7 @@ async def _start_onboarding(
 ) -> None:
     """Start onboarding by asking user to select language."""
     await message.answer(
-        text=i18n.get("onboarding-language"),
+        text=i18n.onboarding_language(),
         reply_markup=get_onboarding_language_keyboard(),
     )
 
@@ -66,6 +66,6 @@ async def command_start_handler(
         return
 
     await message.answer(
-        text=i18n.get("welcome", name=user.first_name),
+        text=i18n.welcome(name=user.first_name),
         reply_markup=get_welcome_keyboard(i18n),
     )

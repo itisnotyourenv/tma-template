@@ -1,7 +1,7 @@
 from aiogram import F, Router
 from aiogram.types import Message
-from fluentogram import TranslatorRunner
 
+from src.infrastructure.i18n import TranslatorRunner
 from src.presentation.bot.filters.admin import AdminFilter
 
 router = Router(name="echo")
@@ -61,4 +61,4 @@ async def admin_media_handler(message: Message) -> None:
 @router.message()
 async def echo_handler(message: Message, i18n: TranslatorRunner) -> None:
     """Catch-all for any unhandled messages."""
-    await message.answer(text=i18n.get("echo-unknown-message"))
+    await message.answer(text=i18n.echo_unknown_message())
