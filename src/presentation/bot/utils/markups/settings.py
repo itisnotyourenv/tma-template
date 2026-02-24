@@ -15,7 +15,7 @@ def get_welcome_keyboard(i18n: TranslatorRunner) -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text=i18n.get("btn_settings"),
+                    text=i18n.btn_settings(),
                     callback_data=SettingsCBData.menu,
                 ),
             ],
@@ -29,13 +29,13 @@ def get_settings_keyboard(i18n: TranslatorRunner) -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text=i18n.get("btn_language"),
+                    text=i18n.btn_language(),
                     callback_data=SettingsCBData.language,
                 ),
             ],
             [
                 InlineKeyboardButton(
-                    text=i18n.get("btn_back"),
+                    text=i18n.btn_back(),
                     callback_data=SettingsCBData.back,
                 ),
             ],
@@ -71,7 +71,7 @@ def get_language_keyboard(
             ],
             [
                 InlineKeyboardButton(
-                    text=i18n.get("btn_back"),
+                    text=i18n.btn_back(),
                     callback_data=SettingsCBData.menu,
                 ),
             ],
