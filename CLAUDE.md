@@ -13,7 +13,7 @@ Telegram Mini App template: a Telegram bot (aiogram) + REST API (Litestar) with 
 uv sync
 
 # Start dev database
-just up                     # or: docker-compose up -d
+just up                     # or: docker compose up -d
 
 # Run migrations
 alembic upgrade head
