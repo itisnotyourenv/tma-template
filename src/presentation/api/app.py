@@ -1,9 +1,7 @@
 from dishka import make_async_container
 from dishka.integrations.litestar import setup_dishka
 from litestar import Litestar
-from litestar.di import Provide
 from litestar.exceptions import ClientException, NotAuthorizedException
-from litestar.middleware import DefineMiddleware
 from litestar.openapi.config import OpenAPIConfig
 from litestar.openapi.plugins import ScalarRenderPlugin
 from pydantic import ValidationError as PydanticValidationError
@@ -26,22 +24,17 @@ from .exception import (
     validation_error_handler,
     value_error_handler,
 )
-from .middleware.auth import AuthMiddleware
-from .providers import provide_user_id
+from .security import create_jwt_auth
 from .utils import setup_routes
 
-PUBLIC_AUTH_EXCLUDE_PATTERNS = [
-    r"^/auth(?:/|$)",
-    r"^/health(?:/|$)",
-    r"^/schema(?:/|$)",
-]
 
-
-def prepare_app(auth_service: AuthService) -> Litestar:
+def prepare_app(config: Config) -> Litestar:
     routes = setup_routes()
+    jwt_auth = create_jwt_auth(config)
 
-    app = Litestar(
+    return Litestar(
         route_handlers=[routes],
+        on_app_init=[jwt_auth.on_app_init],
         openapi_config=OpenAPIConfig(
             title="TG app API",
             description="API for TG app",
@@ -59,26 +52,14 @@ def prepare_app(auth_service: AuthService) -> Litestar:
             TypeError: value_error_handler,
             InvalidInitDataError: exception_logs_handler,
         },
-        middleware=[
-            DefineMiddleware(
-                AuthMiddleware,
-                exclude=PUBLIC_AUTH_EXCLUDE_PATTERNS,
-                auth_service=auth_service,
-            )
-        ],
-        dependencies={
-            # todo - rewrite with Dishka
-            "user_id": Provide(provide_user_id, sync_to_thread=False)
-        },
     )
-    return app
 
 
 def create_app() -> Litestar:
     config = load_config()
 
     auth_service: AuthService = AuthServiceImpl(config)
-    app = prepare_app(auth_service)
+    app = prepare_app(config)
 
     interactor_provider_instances = [
         interactor() for interactor in interactor_providers
@@ -92,4 +73,5 @@ def create_app() -> Litestar:
     )
 
     setup_dishka(container=container, app=app)
+
     return app

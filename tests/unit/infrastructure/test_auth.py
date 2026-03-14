@@ -1,7 +1,7 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from unittest.mock import Mock, patch
 
-from jose.jwt import decode, encode, get_unverified_header
+from litestar.security.jwt import Token
 import pytest
 
 from src.application.auth.exceptions import InvalidInitDataError
@@ -32,22 +32,6 @@ class TestAuthServiceImpl:
         return AuthServiceImpl(mock_config)
 
     @pytest.fixture
-    def valid_token(self, mock_config):
-        """Create a valid JWT token for testing."""
-        payload = {"sub": "12345", "exp": datetime.now(UTC) + timedelta(minutes=30)}
-        return encode(
-            payload, mock_config.auth.secret_key, algorithm=mock_config.auth.algorithm
-        )
-
-    @pytest.fixture
-    def expired_token(self, mock_config):
-        """Create an expired JWT token for testing."""
-        payload = {"sub": "12345", "exp": datetime.now(UTC) - timedelta(minutes=30)}
-        return encode(
-            payload, mock_config.auth.secret_key, algorithm=mock_config.auth.algorithm
-        )
-
-    @pytest.fixture
     def valid_init_data_mock(self):
         """Mock valid parsed init data."""
         user_mock = Mock()
@@ -71,56 +55,13 @@ class TestAuthServiceImpl:
         assert isinstance(token, str)
         assert len(token) > 0
 
-        # Verify token can be decoded
-
-        payload = decode(
-            token, mock_config.auth.secret_key, algorithms=[mock_config.auth.algorithm]
+        decoded = Token.decode(
+            encoded_token=token,
+            secret=mock_config.auth.secret_key,
+            algorithm=mock_config.auth.algorithm,
         )
-        assert payload["sub"] == str(user_id)
-        assert "exp" in payload
-
-    def test_validate_access_token_success(self, auth_service, valid_token):
-        user_id = auth_service.validate_access_token(valid_token)
-
-        assert user_id == 12345
-
-    def test_validate_access_token_expired(self, auth_service, expired_token):
-        with pytest.raises(ValidationError, match="Token has expired"):
-            auth_service.validate_access_token(expired_token)
-
-    def test_validate_access_token_invalid_signature(self, auth_service, mock_config):
-        # Create token with different secret
-        payload = {"sub": "12345", "exp": datetime.now(UTC) + timedelta(minutes=30)}
-        invalid_token = encode(payload, "wrong-secret", algorithm="HS256")
-
-        with pytest.raises(ValidationError, match="Invalid token"):
-            auth_service.validate_access_token(invalid_token)
-
-    def test_validate_access_token_missing_subject(self, auth_service, mock_config):
-        # Create token without subject
-        payload = {"exp": datetime.now(UTC) + timedelta(minutes=30)}
-        token = encode(
-            payload, mock_config.auth.secret_key, algorithm=mock_config.auth.algorithm
-        )
-
-        with pytest.raises(ValidationError, match="Token missing subject"):
-            auth_service.validate_access_token(token)
-
-    def test_validate_access_token_invalid_user_id_format(
-        self, auth_service, mock_config
-    ):
-        # Create token with non-numeric subject
-        payload = {"sub": "invalid", "exp": datetime.now(UTC) + timedelta(minutes=30)}
-        token = encode(
-            payload, mock_config.auth.secret_key, algorithm=mock_config.auth.algorithm
-        )
-
-        with pytest.raises(ValidationError, match="Invalid user ID in token"):
-            auth_service.validate_access_token(token)
-
-    def test_validate_access_token_malformed_token(self, auth_service):
-        with pytest.raises(ValidationError, match="Invalid token"):
-            auth_service.validate_access_token("malformed.token.here")
+        assert decoded.sub == str(user_id)
+        assert decoded.exp > datetime.now(UTC)
 
     @patch("src.infrastructure.auth.safe_parse_webapp_init_data")
     def test_validate_init_data_success(
@@ -193,20 +134,15 @@ class TestAuthServiceImpl:
             auth_service.validate_init_data(init_data)
 
     @pytest.mark.parametrize("user_id_value", [1, 999999999, 12345])
-    def test_create_and_validate_token_roundtrip(self, auth_service, user_id_value):
+    def test_create_token_roundtrip(self, auth_service, mock_config, user_id_value):
         token = auth_service.create_access_token(user_id_value)
-        validated_user_id = auth_service.validate_access_token(token)
+        decoded = Token.decode(
+            encoded_token=token,
+            secret=mock_config.auth.secret_key,
+            algorithm=mock_config.auth.algorithm,
+        )
 
-        assert validated_user_id == user_id_value
-
-    def test_token_headers_include_kid(self, auth_service, mock_config):
-        user_id = 12345
-        token = auth_service.create_access_token(user_id)
-
-        # Decode without verification to check headers
-
-        headers = get_unverified_header(token)
-        assert headers.get("kid") == "main"
+        assert decoded.sub == str(user_id_value)
 
 
 class TestInitDataDTO:

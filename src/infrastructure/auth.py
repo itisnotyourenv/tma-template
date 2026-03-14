@@ -1,8 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 from aiogram.utils.web_app import safe_parse_webapp_init_data
-from jose import ExpiredSignatureError, JWTError
-from jose.jwt import decode, encode
+from litestar.security.jwt import Token
 
 from src.application.auth.exceptions import InvalidInitDataError
 from src.application.common.exceptions import ValidationError
@@ -39,38 +38,15 @@ class AuthServiceImpl(AuthService):
         )
 
     def create_access_token(self, user_id: int) -> str:
-        to_encode = {
-            "sub": str(user_id),
-            "exp": datetime.now(UTC)
+        token = Token(
+            sub=str(user_id),
+            exp=datetime.now(UTC)
             + timedelta(minutes=self.config.auth.access_token_expire_minutes),
-        }
-        encoded_jwt = encode(
-            to_encode,
-            self.config.auth.secret_key,
-            algorithm=self.config.auth.algorithm,
-            headers={"kid": "main"},
         )
-        return encoded_jwt
-
-    def validate_access_token(self, token: str) -> int:
-        """Validate JWT token and return user_id if valid."""
-        try:
-            payload = decode(
-                token,
-                self.config.auth.secret_key,
-                algorithms=[self.config.auth.algorithm],
-            )
-            user_id_str = payload.get("sub")
-            if user_id_str is None:
-                raise ValidationError("Token missing subject")
-
-            return int(user_id_str)
-        except ExpiredSignatureError as err:
-            raise ValidationError("Token has expired") from err
-        except JWTError as err:
-            raise ValidationError("Invalid token") from err
-        except (ValueError, TypeError) as err:
-            raise ValidationError("Invalid user ID in token") from err
+        return token.encode(
+            secret=self.config.auth.secret_key,
+            algorithm=self.config.auth.algorithm,
+        )
 
 
 if __name__ == "__main__":

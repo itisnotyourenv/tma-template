@@ -9,11 +9,12 @@ from src.presentation.api.auth.schemas import (
     AuthTgRequestSchema,
     AuthTgResponseSchema,
 )
+from src.presentation.api.security import PUBLIC_ROUTE
 
 logger = logging.getLogger(__name__)
 
 
-@post("/", dto=AuthTgRequestSchema, return_dto=AuthTgResponseSchema)
+@post("/", dto=AuthTgRequestSchema, return_dto=AuthTgResponseSchema, **PUBLIC_ROUTE)
 @inject
 async def auth_user_handler(
     data: AuthTgRequest,

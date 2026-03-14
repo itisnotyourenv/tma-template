@@ -1,7 +1,9 @@
 import logging
+from typing import Any
 
 from dishka.integrations.litestar import FromDishka, inject
-from litestar import Router, get
+from litestar import Request, Router, get
+from litestar.security.jwt import Token
 
 from src.application.user.get_me import (
     GetUserProfileInputDTO,
@@ -17,15 +19,11 @@ logger = logging.getLogger(__name__)
 @get("/profile", return_dto=UserProfileResponseSchema)
 @inject
 async def get_user_profile(
-    user_id: UserId,
+    request: Request[UserId, Token, Any],
     interactor: FromDishka[GetUserProfileInteractor],
 ) -> GetUserProfileOutputDTO:
-    """
-    Get the authenticated user's profile.
-
-    Requires valid JWT token in Authorization header.
-    """
-    response = await interactor(data=GetUserProfileInputDTO(user_id=user_id))
+    """Get the authenticated user's profile."""
+    response = await interactor(data=GetUserProfileInputDTO(user_id=request.user))
 
     return response
 

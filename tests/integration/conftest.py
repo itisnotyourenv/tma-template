@@ -1,10 +1,9 @@
-from collections.abc import AsyncGenerator, AsyncIterator, Callable
+from collections.abc import AsyncGenerator, AsyncIterator
 import os
 
 from dishka import AsyncContainer, make_async_container
 from dishka.integrations.litestar import setup_dishka
 import httpx
-from httpx import AsyncClient
 from litestar import Litestar
 import pytest
 from sqlalchemy import text
@@ -16,7 +15,6 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from src.application.interfaces.auth import AuthService
-from src.domain.user.vo import UserId
 from src.infrastructure.auth import AuthServiceImpl
 from src.infrastructure.config import Config
 from src.infrastructure.db.models.base import BaseORMModel
@@ -97,8 +95,8 @@ def test_auth_service(test_config: Config) -> AuthService:
 
 
 @pytest.fixture(scope="session")
-def test_app(test_auth_service: AuthService) -> Litestar:
-    app = prepare_app(test_auth_service)
+def test_app(test_config: Config) -> Litestar:
+    app = prepare_app(test_config)
     app.debug = True
     return app
 
@@ -117,26 +115,6 @@ async def test_client(app: Litestar):
         base_url="http://testserver.local",
     ) as client:
         yield client
-
-
-@pytest.fixture(scope="function")
-def create_authenticated_client(
-    test_client: AsyncClient,
-) -> Callable[..., tuple[AsyncClient, UserId]]:
-    """Factory to create authenticated clients for tests."""
-
-    def _create_authenticated_client(user_id: int) -> tuple[AsyncClient, UserId]:
-        client = test_client
-        client.headers.update({"X-User-Id": str(user_id)})
-        return client, UserId(user_id)
-
-    return _create_authenticated_client
-
-
-@pytest.fixture
-def authenticated_client(create_authenticated_client) -> tuple[AsyncClient, UserId]:
-    """Set up test client with authentication headers."""
-    return create_authenticated_client(1)
 
 
 @pytest.fixture(scope="session")

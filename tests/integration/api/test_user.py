@@ -13,13 +13,13 @@ class TestUserProfile:
         self, test_client: AsyncClient, test_config: Config
     ) -> str:
         """Helper method to get a valid JWT token for testing."""
-        auth_data = {"init_data": test_config.telegram.tg_init_data}
+        auth_data = {"initData": test_config.telegram.tg_init_data}
 
         response = await test_client.post("auth", json=auth_data)
         assert response.status_code == HTTPStatus.CREATED
 
         response_data = response.json()
-        return response_data["access_token"]
+        return response_data["accessToken"]
 
     async def _create_authenticated_client(
         self, test_client: AsyncClient, test_config: Config
