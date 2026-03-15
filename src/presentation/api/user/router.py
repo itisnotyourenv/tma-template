@@ -11,7 +11,8 @@ from src.application.user.get_me import (
     GetUserProfileOutputDTO,
 )
 from src.domain.user.vo import UserId
-from src.presentation.api.user.schemas import UserProfileResponseSchema
+
+from .schemas import UserProfileResponseSchema
 
 logger = logging.getLogger(__name__)
 

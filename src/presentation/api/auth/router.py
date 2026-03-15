@@ -4,12 +4,13 @@ from dishka.integrations.litestar import FromDishka, inject
 from litestar import Router, post
 
 from src.application.auth.tg import AuthTgInputDTO, AuthTgInteractor, AuthTgOutputDTO
-from src.presentation.api.auth.schemas import (
+from src.presentation.api.security import PUBLIC_ROUTE
+
+from .schemas import (
     AuthTgRequest,
     AuthTgRequestSchema,
     AuthTgResponseSchema,
 )
-from src.presentation.api.security import PUBLIC_ROUTE
 
 logger = logging.getLogger(__name__)
 

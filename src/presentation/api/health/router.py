@@ -2,11 +2,12 @@ import logging
 
 from litestar import Router, get
 
-from src.presentation.api.health.schemas import (
+from src.presentation.api.security import PUBLIC_ROUTE
+
+from .schemas import (
     HealthCheckResponse,
     HealthCheckResponseSchema,
 )
-from src.presentation.api.security import PUBLIC_ROUTE
 
 logger = logging.getLogger(__name__)
 
