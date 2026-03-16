@@ -1,75 +1,55 @@
-**🛠️ Prompt: Review File – `$FILE_NAME`**
-
-You are tasked with reviewing the file: **`$FILE_NAME`**
-
-Follow the steps below:
-
+---
+description: Review a single file and return actionable findings with evidence
+argument-hint: <file-path>
+allowed-tools:
+  - Read
+  - Grep
+  - Glob
+  - Task
 ---
 
-### 1. 🔍 **Understand the File’s Purpose**
-- Analyze the code to understand what it does and why it exists.
-- Determine how it fits into the larger system or domain.
+Review the file provided in the argument.
+Understand what it does before judging how it does it.
 
-✅ **Goal:**  
-After forming a clear understanding, **create a GitHub issue** with:
-- A **summary of the file's purpose**
-- A brief explanation of how it connects to other parts of the system
-- Any **open questions**, uncertainties, or architectural concerns
+## Review goals
 
----
+### 1. Purpose and system role
+Explain:
+- the file's responsibility
+- the main symbols it defines
+- how it connects to nearby modules, callers, or framework boundaries
 
-### 2. 🧹 **Analyze Code Quality**
-Review the Python code for:
-- Clarity, simplicity, and readability
-- Adherence to [PEP 8](https://www.python.org/dev/peps/pep-0008/) and Pythonic practices
-- Proper naming and modular structure
-- Safe error handling and input validation
-- Use of idioms and patterns consistent with the codebase
+### 2. Correctness and contracts
+Look for:
+- logic bugs
+- hidden assumptions about inputs, environment, or ordering
+- misleading return values or error handling
+- contracts that callers could misunderstand
+- edge cases that appear unhandled
 
----
-
-### 3. 🧠 **Evaluate Design & Maintainability**
+### 3. Design and maintainability
 Assess:
-- Code organization and separation of concerns
-- Application of SOLID, DRY, and KISS principles
-- Scalability, extensibility, and testability
-- Reusability of components and avoidance of duplication
+- separation of concerns
+- clarity of naming and structure
+- duplication and opportunities to reuse existing patterns
+- whether abstractions cover their domain honestly
+- whether the next maintainer will understand the intended invariants
 
----
+### 4. Testing and operational risk
+Call out:
+- missing or weak tests
+- fragile branches or failure modes
+- security or performance concerns when relevant
+- places where comments or naming should explain non-obvious intent
 
-### 4. 🧪 **Suggest Improvements**
-Identify all potential improvements such as:
-- Refactoring opportunities
-- Risk areas or potential bugs
-- Performance optimizations
-- Missing or weak test coverage
+## Output format
+Return a structured review with:
+1. File purpose and system context.
+2. Must-fix findings.
+3. Suggestions and refactors.
+4. Missing tests or validation gaps.
+5. Open questions.
+6. Optional GitHub issue drafts for distinct follow-up items.
 
----
-
-### 5. 📝 **Create a GitHub Issue with Sub-Issues**
-Once the review is complete:
-
-- Open **one primary GitHub issue** titled:  
-  `"Code Review – $FILE_NAME"`
-  
-- In the issue body, include:
-  - A high-level summary of your analysis
-  - A task list using GitHub markdown to represent **each finding or improvement**:
-  
-```md
-## 🔧 Review Summary: `$FILE_NAME`
-
-- File Purpose: _[Short description]_
-- Reviewer: _[Your Name or AI]_
-- Review Date: _[YYYY-MM-DD]_
-
-### ✅ Issues & Recommendations
-
-- [ ] Clarify unclear function `X` – purpose is ambiguous  
-- [ ] Rename variable `temp` to be more descriptive  
-- [ ] Remove unused import `abc`  
-- [ ] Add test case for edge condition in `handle_event()`  
-- [ ] Refactor nested `if` in `process_data()` for readability  
-```
-
-This structure enables your team to track review findings as **subtasks**, delegate work, and mark resolutions individually.
+For each finding, cite concrete evidence such as file paths, symbol names, and the behavior at risk.
+Do not create GitHub issues unless the user explicitly asks; return drafts only.

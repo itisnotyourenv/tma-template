@@ -1,68 +1,67 @@
-# 📊 Prompt: Test Directory Audit with GitHub Issue Generation
-
-Please analyze the contents of the `tests/` directory in this project. Perform a thorough audit and complete the following tasks:
-
+---
+description: Audit the test suite for speed, consistency, and reliability, then return issue drafts
+argument-hint: [optional-focus]
+allowed-tools:
+  - Read
+  - Grep
+  - Glob
+  - Task
+  - Bash(uv run pytest:*)
+  - Bash(just test:*)
 ---
 
-## 🚀 1. Performance Bottlenecks
+Review the repository's test suite, with emphasis on `tests/`, shared fixtures, helper factories, and any supporting test configuration that explains current behavior.
 
-- Identify any **slowdowns in test execution**, including:
-  - heavy or duplicated fixtures
-  - real interactions with database, network, or external services instead of mocks
-  - unnecessary `sleep()` or artificial delays
-  - unparameterized tests running the same logic repeatedly
-  - overly broad test scopes (e.g. using integration tests where unit tests suffice)
-- Recommend **optimizations** (e.g., `pytest.mark.parametrize`, `pytest-xdist`, mocking with `unittest.mock`, using factory libraries like `factory_boy`)
-- Suggest areas where **parallelization** can be applied
+If the user supplies an argument, treat it as a focus area (for example a subdirectory, file, or concern) and still note any high-severity cross-cutting issues you discover.
 
----
+## What to evaluate
 
-## 🧬 2. Style Consistency & Testing Patterns
+### 1. Execution speed and bottlenecks
+Identify slow or wasteful patterns such as:
+- duplicated or expensive fixtures
+- unnecessary database, network, filesystem, or external-service I/O
+- `sleep()` / timing-based waits / retry loops that create flakiness
+- repeated test bodies that should be parameterized
+- integration coverage being used where a smaller unit test would prove the same behavior
+- setup/teardown work that is much broader than the assertions require
 
-- Identify what **testing styles** are used (e.g., unit, integration, e2e, property-based)
-- Detect **inconsistencies in test structure or format**, such as:
-  - Mixing different testing frameworks (`pytest`, `unittest`, etc.)
-  - Varying naming conventions for test functions or fixtures
-  - Inconsistent use of `Arrange-Act-Assert` pattern
-  - Non-uniform use of fixtures, mocks, or `assert` statements
-  - Scattered test utility code (e.g., missing or messy `conftest.py`)
-- Spot common **anti-patterns**, like:
-  - tests with side effects
-  - tests dependent on execution order
-  - test cases without assertions
-  - tests that cover too much logic at once
+### 2. Consistency and testing style
+Look for:
+- mixed testing styles or frameworks without a clear reason
+- inconsistent naming for tests, fixtures, factories, or helper modules
+- weak Arrange/Act/Assert structure
+- assertions that are too vague or do not prove the important outcome
+- hidden coupling through global state, ordering, shared data, or environment assumptions
+- scattered utility code that should be centralized
 
----
+### 3. Reliability and maintainability
+Assess:
+- whether tests are deterministic and isolated
+- whether failure messages are actionable
+- whether edge cases and error paths are covered
+- whether helpers/fixtures communicate intent clearly
+- whether the suite is easy to extend without copying patterns
 
-## 🛠 3. Improvements & Best Practices
+### 4. Recommendations
+For every meaningful finding, propose a concrete fix. Prefer recommendations that match the existing stack and configuration in this repo.
 
-- Propose **specific improvements** for:
-  - speed
-  - readability
-  - reliability
-  - test coverage
-- Highlight where **testing best practices** can be applied:
-  - `pytest.raises`, `autouse=True` fixtures
-  - factory functions instead of raw object creation
-  - centralized config with `pytest.ini` or `tox.ini`
+## Evidence rules
+- Cite the exact file paths, test names, fixtures, or helpers involved.
+- Do not claim slowness, flakiness, or duplication without evidence.
+- If you need to run tests, prefer repo-native commands such as `uv run pytest <path>` or `just test` instead of bare `pytest`.
+- Run the narrowest command that proves the point; do not burn time on full-suite runs when a focused command is enough.
 
----
+## Output
+Return all of the following:
+1. An executive summary.
+2. A findings table with severity, evidence, impact, and recommendation.
+3. GitHub issue drafts for each distinct problem area.
 
-## 📌 4. Create a GitHub Issue for Each Finding
+Each issue draft must include:
+- title
+- problem summary
+- why it matters
+- recommended change
+- affected files/tests
 
-For **each discovered issue or opportunity for improvement**, do the following:
-
-- Create a **separate GitHub issue** with:
-  - A clear and concise **title**
-  - A description of the **problem or inconsistency**
-  - Explanation of **why it's a concern**
-  - A specific and actionable **recommendation**
-  - Optional: **Links or references to lines/files**, if available
-- If the same problem appears in multiple places, summarize it in **a single issue**, listing all occurrences
-
----
-
-Once the analysis is complete, return:
-
-- A structured **summary report**
-- A list of **GitHub issue drafts** (title + content) for easy copy-paste
+Do not create live GitHub issues unless the user explicitly asks. Return drafts only.
