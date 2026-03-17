@@ -1239,16 +1239,7 @@ wheels = [
 ]
 
 [[package]]
-name = "termcolor"
-version = "3.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ca/6c/3d75c196ac07ac8749600b60b03f4f6094d54e132c4d94ebac6ee0e0add0/termcolor-3.1.0.tar.gz", hash = "sha256:6a6dd7fbee581909eeec6a756cff1d7f7c376063b14e4a298dc4980309e55970", size = 14324, upload-time = "2025-04-30T11:37:53.791Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/4f/bd/de8d508070629b6d84a30d01d57e4a65c69aa7f5abe7560b8fad3b50ea59/termcolor-3.1.0-py3-none-any.whl", hash = "sha256:591dd26b5c2ce03b9e43f391264626557873ce1d379019786f99b0c2bee140aa", size = 7684, upload-time = "2025-04-30T11:37:52.382Z" },
-]
-
-[[package]]
-name = "tg-app"
+name = "template-app"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
@@ -1278,14 +1269,10 @@ dependencies = [
     { name = "ty" },
 ]
 
-[package.optional-dependencies]
-dev = [
-    { name = "mypy" },
-]
-
 [package.dev-dependencies]
 dev = [
     { name = "granian", extra = ["reload"] },
+    { name = "mypy" },
 ]
 
 [package.metadata]
@@ -1301,7 +1288,6 @@ requires-dist = [
     { name = "greenlet", specifier = ">=3.2.3" },
     { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "litestar", extras = ["jwt"], specifier = ">=2.16.0" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.9.0" },
     { name = "pre-commit", specifier = ">=4.0.1" },
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "pytest", specifier = ">=8.4.1" },
@@ -1316,10 +1302,21 @@ requires-dist = [
     { name = "sqlalchemy", specifier = ">=2.0.41" },
     { name = "ty", specifier = ">=0.0.1a16" },
 ]
-provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "granian", extras = ["reload"], specifier = ">=2.7.1" }]
+dev = [
+    { name = "granian", extras = ["reload"], specifier = ">=2.7.1" },
+    { name = "mypy", specifier = ">=1.9.0" },
+]
+
+[[package]]
+name = "termcolor"
+version = "3.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ca/6c/3d75c196ac07ac8749600b60b03f4f6094d54e132c4d94ebac6ee0e0add0/termcolor-3.1.0.tar.gz", hash = "sha256:6a6dd7fbee581909eeec6a756cff1d7f7c376063b14e4a298dc4980309e55970", size = 14324, upload-time = "2025-04-30T11:37:53.791Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4f/bd/de8d508070629b6d84a30d01d57e4a65c69aa7f5abe7560b8fad3b50ea59/termcolor-3.1.0-py3-none-any.whl", hash = "sha256:591dd26b5c2ce03b9e43f391264626557873ce1d379019786f99b0c2bee140aa", size = 7684, upload-time = "2025-04-30T11:37:52.382Z" },
+]
 
 [[package]]
 name = "ty"

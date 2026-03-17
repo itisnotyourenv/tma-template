@@ -144,45 +144,46 @@ jobs:
             coverage.xml
 
 # ── Security ──────────────────────────────────────────────────────────────
+  # TODO: make proper security scan job with SAST, secret scanning, dependency scanning, etc. For now, these checks are included in lint and test jobs to keep things simple and fast by default.
 
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
+  # security-scan:
+  #   name: Security Scan
+  #   runs-on: ubuntu-latest
+  #   continue-on-error: true
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: ${{ env.PYTHON_VERSION }}
 
-      - uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
+  #     - uses: astral-sh/setup-uv@v4
+  #       with:
+  #         enable-cache: true
+  #         cache-dependency-glob: "uv.lock"
 
-      - name: Install dependencies
-        run: uv sync --frozen --group dev
+  #     - name: Install dependencies
+  #       run: uv sync --frozen --group dev
 
-      - name: Ruff security rules
-        run: uv run ruff check $LINT_PATHS --select=S --output-format=github || true
+  #     - name: Ruff security rules
+  #       run: uv run ruff check $LINT_PATHS --select=S --output-format=github || true
 
-      - name: Check for potential secrets
-        run: |
-          echo "🔍 Checking for potential secrets (tracked YAML/JSON only)..."
-          set +e
-          git grep -nEi "password|secret|key|token" -- '*.yaml' '*.yml' '*.json' \
-            | grep -v -Ei '(example|template)' \
-            | grep -v '.github/workflows/'
-          GREP_EXIT=$?
-          set -e
+  #     - name: Check for potential secrets
+  #       run: |
+  #         echo "🔍 Checking for potential secrets (tracked YAML/JSON only)..."
+  #         set +e
+  #         git grep -nEi "password|secret|key|token" -- '*.yaml' '*.yml' '*.json' \
+  #           | grep -v -Ei '(example|template)' \
+  #           | grep -v '.github/workflows/'
+  #         GREP_EXIT=$?
+  #         set -e
 
-          if [ "$GREP_EXIT" -eq 0 ]; then
-            echo "⚠️  Potential secrets found (review output above)"
-            exit 1
-          else
-            echo "✅ No obvious secrets found"
-          fi
+  #         if [ "$GREP_EXIT" -eq 0 ]; then
+  #           echo "⚠️  Potential secrets found (review output above)"
+  #           exit 1
+  #         else
+  #           echo "✅ No obvious secrets found"
+  #         fi
 
 # ── Type Check ────────────────────────────────────────────────────────────
 

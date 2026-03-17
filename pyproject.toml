@@ -1,5 +1,5 @@
 [project]
-name = "tg-app"
+name = "template-app"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -32,9 +32,10 @@ dependencies = [
     "granian>=2.7.1",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "mypy>=1.9.0",
+    "granian[reload]>=2.7.1",
 ]
 
 
@@ -187,9 +188,4 @@ max-statements = 50
 [tool.coverage.run]
 omit = [
     "src/presentation/bot/**/*",
-]
-
-[dependency-groups]
-dev = [
-    "granian[reload]>=2.7.1",
 ]
