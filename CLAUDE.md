@@ -61,7 +61,7 @@ Interactors (use cases) inherit from `Interactor[InputDTO, OutputDTO]` and imple
 - **db/repos/**: Repository implementations (implement domain protocols)
 - **db/migrations/**: Alembic migrations (script location: `src/infrastructure/db/migrations`)
 - **di/**: Dishka dependency injection providers (`DBProvider`, `AuthProvider`, `I18nProvider`)
-- **config.py**: Pydantic config loaded from YAML (`config.yaml` for dev, `config-local.yaml` for tests)
+- **config.py**: Pydantic config loaded from YAML (`config.yaml` for dev, `config-test.yaml` for tests)
 
 ### Presentation (`src/presentation/`)
 - **api/**: Litestar REST API (controllers, auth middleware, health check)
@@ -77,7 +77,7 @@ Interactors (use cases) inherit from `Interactor[InputDTO, OutputDTO]` and imple
 
 ## Testing
 
-- Tests use `config-local.yaml` (copy from `config-example.yaml`)
+- Tests use `config-test.yaml` (copy from `config-example.yaml`)
 - Test DB runs on port 5435 via `docker-compose-test.yml`
 - pytest-xdist runs tests in parallel (`-n auto`); workers get isolated databases
 - Factory-boy factories in `tests/utils/model_factories/`
@@ -88,7 +88,7 @@ Interactors (use cases) inherit from `Interactor[InputDTO, OutputDTO]` and imple
 
 Two config files needed for development:
 - `config.yaml` — local dev (bot, API)
-- `config-local.yaml` — tests
+- `config-test.yaml` — tests
 
 Both are gitignored. Copy from `config-example.yaml` and fill in bot token + credentials.
 

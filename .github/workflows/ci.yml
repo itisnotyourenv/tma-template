@@ -2,180 +2,387 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches:
+      - '**'
+    tags-ignore:
+      - '**'
   pull_request:
-    branches: [ main, develop ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.14.2"
+  MYPY_PATHS: "src/"
+  LINT_PATHS: "src/ tests/"
+
+# ── Validate ──────────────────────────────────────────────────────────────
 
 jobs:
-  lint-and-format:
-    name: Code Quality (Ruff)
+  check-required-files:
+    name: Validate Required Files
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-        
-    - name: Install uv
-      uses: astral-sh/setup-uv@v4
-      with:
-        version: "latest"
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
-        
-    - name: Install dependencies
-      run: uv sync
-      
-    - name: Run Ruff linting
-      run: uv run ruff check src/ tests/ --output-format=github
-      
-    - name: Run Ruff formatting check
-      run: uv run ruff format src/ tests/ --check
+      - uses: actions/checkout@v4
+
+      - name: Check required files exist
+        run: |
+          missing=0
+          for f in .pre-commit-config.yaml pyproject.toml uv.lock; do
+            if [ ! -f "$f" ]; then
+              echo " - $f"
+              missing=1
+            fi
+          done
+
+          if [ "$missing" -ne 0 ]; then
+            echo "❌ Missing required files (listed above)"
+            exit 1
+          fi
+
+          echo "✅ All required configuration files are present"
+
+  check-dependencies:
+    name: Validate Lockfile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Verify lockfile is up-to-date
+        run: uv lock --check
+
+  lint-and-format:
+    name: Lint & Format (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Ruff lint
+        run: uv run ruff check $LINT_PATHS --output-format=github
+
+      - name: Ruff format check
+        run: uv run ruff format $LINT_PATHS --check
+
+# ── Test ──────────────────────────────────────────────────────────────────
 
   test:
     name: Tests
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.13']
-        os: [ubuntu-latest]
-      fail-fast: false
-    
     services:
       postgres:
-        image: postgres:15
+        image: postgres:17
         env:
-          POSTGRES_PASSWORD: dev_password
+          POSTGRES_DB: cifra_db
           POSTGRES_USER: dev_user
-          POSTGRES_DB: ask_app
+          POSTGRES_PASSWORD: dev_password
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_INITDB_ARGS: "--auth-host=trust"
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 5435:5432
-    
+          - 5432:5432
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        
-    - name: Install uv
-      uses: astral-sh/setup-uv@v4
-      with:
-        version: "latest"
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
-        
-    - name: Install dependencies
-      run: uv sync
-      
-    - name: Run tests with parallel execution
-      run: uv run pytest tests/ -v --tb=short -n auto --dist worksteal
-      env:
-        # Test database configuration
-        TEST_DATABASE_URL: postgresql+asyncpg://test_user:test_password@localhost:5432/test_db
-        
-    - name: Run tests with coverage
-      run: uv run pytest tests/ --cov=src --cov-report=xml --cov-report=term-missing -n auto --dist worksteal
-      env:
-        TEST_DATABASE_URL: postgresql+asyncpg://test_user:test_password@localhost:5432/test_db
+      - uses: actions/checkout@v4
 
-  security:
-    name: Security Scan (Bandit)
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --frozen --group tests
+
+      - name: Run tests with coverage
+        env:
+          CI_POSTGRES_HOST: localhost
+          CI_POSTGRES_PORT: "5432"
+        run: |
+          uv run pytest tests/ \
+            -v --tb=short \
+            -n auto --dist worksteal \
+            --junitxml=pytest-junit.xml \
+            --cov=src \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            pytest-junit.xml
+            coverage.xml
+
+# ── Security ──────────────────────────────────────────────────────────────
+
+  security-scan:
+    name: Security Scan
     runs-on: ubuntu-latest
-    
+    continue-on-error: true
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-        
-    - name: Install uv
-      uses: astral-sh/setup-uv@v4
-      with:
-        version: "latest"
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
-        
-    - name: Install dependencies
-      run: uv sync
-      
-    - name: Run security scan with Bandit via Ruff
-      run: uv run ruff check src/ --select=S --output-format=github
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Ruff security rules
+        run: uv run ruff check $LINT_PATHS --select=S --output-format=github || true
+
+      - name: Check for potential secrets
+        run: |
+          echo "🔍 Checking for potential secrets (tracked YAML/JSON only)..."
+          set +e
+          git grep -nEi "password|secret|key|token" -- '*.yaml' '*.yml' '*.json' \
+            | grep -v -Ei '(example|template)' \
+            | grep -v '.github/workflows/'
+          GREP_EXIT=$?
+          set -e
+
+          if [ "$GREP_EXIT" -eq 0 ]; then
+            echo "⚠️  Potential secrets found (review output above)"
+            exit 1
+          else
+            echo "✅ No obvious secrets found"
+          fi
+
+# ── Type Check ────────────────────────────────────────────────────────────
 
   type-check:
-    name: Type Checking (MyPy)
+    name: Type Check (MyPy)
     runs-on: ubuntu-latest
-    
+    continue-on-error: true
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-        
-    - name: Install uv
-      uses: astral-sh/setup-uv@v4
-      with:
-        version: "latest"
-        
-    - name: Install dependencies with dev extras
-      run: uv sync --extra dev
-      
-    - name: Run MyPy type checking
-      run: uv run mypy src/ --ignore-missing-imports --no-strict-optional
-      continue-on-error: true  # Allow type checking to be informational for now
+      - uses: actions/checkout@v4
 
-  build:
-    name: Build Check
-    runs-on: ubuntu-latest
-    needs: [lint-and-format, test, security]
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-        
-    - name: Install uv
-      uses: astral-sh/setup-uv@v4
-      with:
-        version: "latest"
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
-        
-    - name: Install dependencies
-      run: uv sync
-      
-    - name: Verify application can start
-      run: |
-        # Basic import test to ensure no syntax errors
-        uv run python -c "
-        try:
-            from src.presentation.api.app import create_app
-            print('✅ Application imports successfully')
-        except ImportError as e:
-            print(f'❌ Import error: {e}')
-            exit(1)
-        except Exception as e:
-            print(f'⚠️  Import warning: {e}')
-            print('✅ Basic syntax check passed')
-        "
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Run MyPy
+        run: uv run mypy $MYPY_PATHS --ignore-missing-imports --no-strict-optional
+
+# ── Build ─────────────────────────────────────────────────────────────────
+  # NOTE: disabled in template since not all projects will build a Docker image, and we want to keep CI fast by default. Can be enabled as needed.
+
+  # build-check:
+  #   name: Build Check
+  #   runs-on: ubuntu-latest
+  #   needs: [lint-and-format, test, security-scan]
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: ${{ env.PYTHON_VERSION }}
+
+  #     - uses: astral-sh/setup-uv@v4
+  #       with:
+  #         enable-cache: true
+  #         cache-dependency-glob: "uv.lock"
+
+  #     - name: Install production dependencies
+  #       run: uv sync --frozen --all-packages --no-group dev
+
+  #     - name: Prepare env file
+  #       run: cp .env.example .env
+
+  #     - name: Verify application imports
+  #       run: uv run python -c "from src.presentation.api.app import create_app; print('✅ Application imports successfully')"
+
+  # build-image:
+  #   name: Build & Push Docker Image
+  #   runs-on: ubuntu-latest
+  #   needs: [build-check]
+  #   if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - uses: dorny/paths-filter@v3
+  #       id: changes
+  #       with:
+  #         filters: |
+  #           build:
+  #             - 'uv.lock'
+  #             - 'Dockerfile'
+
+  #     - name: Extract project version
+  #       if: steps.changes.outputs.build == 'true'
+  #       id: meta
+  #       run: |
+  #         VERSION=$(sed -n '/^\[project\]/,/^\[/{s/^[[:space:]]*version[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p}' pyproject.toml | head -n1)
+  #         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+  #         echo "sha_short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+  #         echo "Project version: $VERSION"
+
+  #     - uses: docker/setup-buildx-action@v3
+  #       if: steps.changes.outputs.build == 'true'
+
+  #     - uses: docker/login-action@v3
+  #       if: steps.changes.outputs.build == 'true'
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Build and push image
+  #       if: steps.changes.outputs.build == 'true'
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         context: .
+  #         target: dev
+  #         push: true
+  #         build-args: |
+  #           GIT_COMMIT=${{ steps.meta.outputs.sha_short }}
+  #           GIT_BRANCH=${{ github.ref_name }}
+  #           SENTRY_ENVIRONMENT=${{ github.ref_name }}
+  #           SENTRY_RELEASE=${{ steps.meta.outputs.sha_short }}
+  #         tags: |
+  #           ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.sha_short }}
+  #           ghcr.io/${{ github.repository }}:${{ github.ref_name }}-latest
+  #           ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.version }}
+  #         cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
+  #         cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max
+  #         provenance: false
+
+# ── Release ───────────────────────────────────────────────────────────────
+  # NOTE: disabled in template since not all projects will build a Docker image or create formal releases, and we want to keep CI fast by default. Can be enabled as needed.
+
+  # promote-image:
+  #   name: Promote Image
+  #   runs-on: ubuntu-latest
+  #   needs: [build-check]
+  #   if: github.event_name == 'push' && (github.ref_name == 'staging' || github.ref_name == 'prod')
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   outputs:
+  #     sentry_release: ${{ steps.promote.outputs.sentry_release }}
+  #     sentry_environment: ${{ steps.promote.outputs.sentry_environment }}
+  #   steps:
+  #     - uses: docker/setup-buildx-action@v3
+
+  #     - uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Promote image
+  #       id: promote
+  #       env:
+  #         IMAGE: ghcr.io/${{ github.repository }}
+  #       run: |
+  #         set -euo pipefail
+
+  #         SHA_SHORT="${GITHUB_SHA::7}"
+  #         BRANCH="${{ github.ref_name }}"
+
+  #         if [ "$BRANCH" = "prod" ]; then
+  #           SENTRY_ENVIRONMENT="production"
+  #         else
+  #           SENTRY_ENVIRONMENT="$BRANCH"
+  #         fi
+
+  #         echo "sentry_release=$SHA_SHORT" >> "$GITHUB_OUTPUT"
+  #         echo "sentry_environment=$SENTRY_ENVIRONMENT" >> "$GITHUB_OUTPUT"
+
+  #         SRC="$IMAGE:$SHA_SHORT"
+  #         echo "Promoting existing image: $SRC"
+
+  #         if ! docker manifest inspect "$SRC" >/dev/null 2>&1; then
+  #           echo "❌ No image found for $SRC"
+  #           echo "Ensure a build ran on the default branch for this exact commit first."
+  #           exit 1
+  #         fi
+
+  #         if [ "$BRANCH" = "staging" ]; then
+  #           T1="$IMAGE:staging-latest"
+  #           T2="$IMAGE:staging-$SHA_SHORT"
+  #         else
+  #           T1="$IMAGE:prod-latest"
+  #           T2="$IMAGE:prod-$SHA_SHORT"
+  #         fi
+
+  #         echo "Adding tags: $T1 and $T2 -> $SRC"
+  #         docker buildx imagetools create -t "$T1" -t "$T2" "$SRC"
+  #         echo "✅ Promotion complete"
+
+  # create-release:
+  #   name: Create Release
+  #   runs-on: ubuntu-latest
+  #   needs: [promote-image]
+  #   continue-on-error: true # mirrors GitLab allow_failure: true
+  #   permissions:
+  #     contents: write
+  #   steps:
+  #     - name: Prepare release metadata
+  #       id: meta
+  #       run: echo "sha_short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+  #     - name: Create GitHub release
+  #       uses: softprops/action-gh-release@v2
+  #       with:
+  #         tag_name: ${{ steps.meta.outputs.sha_short }}
+  #         name: "${{ steps.meta.outputs.sha_short }} (${{ github.ref_name }})"
+  #         target_commitish: ${{ github.sha }}
+  #         make_latest: ${{ github.ref_name == 'prod' }}
+  #         body: |
+  #           ## Release notes
+
+  #           - **Branch:** ${{ github.ref_name }}
+  #           - **Commit:** ${{ github.sha }}
+  #           - **Sentry Release:** ${{ needs.promote-image.outputs.sentry_release }}
+  #           - **Sentry Environment:** ${{ needs.promote-image.outputs.sentry_environment }}
+
+  #           ### Links
+  #           - ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

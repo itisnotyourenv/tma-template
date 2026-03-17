@@ -1,0 +1,373 @@
+stages:
+  - validate
+  - test
+  - security
+  - typecheck
+  - build
+  - release
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+variables:
+  PYTHON_VERSION: "3.14.2"
+  MYPY_PATHS: "src/"
+  LINT_PATHS: "src/ tests/"
+  UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  GIT_DEPTH: "1"
+  SENTRY_ENVIRONMENT: "$CI_COMMIT_BRANCH"
+  SENTRY_RELEASE: "$CI_COMMIT_SHORT_SHA"
+
+cache:
+  key:
+    files:
+      - uv.lock
+  paths:
+    - .cache/uv/
+    - .cache/pip/
+    - .ruff_cache/
+    - .mypy_cache/
+
+.python_job:
+  image: python:${PYTHON_VERSION}-slim
+  interruptible: true
+  before_script:
+    - python -V
+    - python -m pip install -q uv
+    - uv --version
+
+.docker_job:
+  image: docker:28
+  variables:
+    DOCKER_HOST: "unix:///var/run/docker.sock"
+    DOCKER_TLS_CERTDIR: ""     # stop docker image from expecting /certs
+    DOCKER_TLS_VERIFY: ""      # unset
+    DOCKER_CERT_PATH: ""       # unset
+    DOCKER_BUILDKIT: "1"
+    BUILDKIT_PROGRESS: "plain"
+  before_script:
+    - docker version
+    - docker buildx version
+    - |
+      set -euo pipefail
+      CA_SRC="certs/dmai-lan-root.crt"
+      test -f "$CA_SRC"
+
+      BASE_CA="/etc/ssl/certs/ca-certificates.crt"
+      BUNDLE="$CI_PROJECT_DIR/ca-bundle.crt"
+      if [ -f "$BASE_CA" ]; then
+        cat "$BASE_CA" "$CA_SRC" > "$BUNDLE"
+      else
+        cp "$CA_SRC" "$BUNDLE"
+      fi
+
+      export SSL_CERT_FILE="$BUNDLE"
+      export CURL_CA_BUNDLE="$BUNDLE"
+      export REQUESTS_CA_BUNDLE="$BUNDLE"
+      export GIT_SSL_CAINFO="$BUNDLE"
+
+      echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+
+      export BUILDER="ci-builder-$CI_JOB_ID"
+
+      mkdir -p /etc/certs
+      cp "$CA_SRC" /etc/certs/registry-ca.pem
+
+      cat > /tmp/buildkitd.toml <<'EOF'
+      debug = false
+      [registry."registry.dmai.internal"]
+        ca=["/etc/certs/registry-ca.pem"]
+      EOF
+
+      docker buildx rm -f "$BUILDER" >/dev/null 2>&1 || true
+      docker buildx create --name "$BUILDER" --use --bootstrap \
+        --driver docker-container \
+        --buildkitd-config /tmp/buildkitd.toml
+
+      docker buildx inspect --bootstrap "$BUILDER"
+  after_script:
+    - docker buildx rm -f "ci-builder-$CI_JOB_ID" >/dev/null 2>&1 || true
+
+check-required-files:
+  stage: validate
+  image: alpine:3.19
+  before_script: []
+  cache: []
+  script:
+    - |
+      missing=0
+      for f in .pre-commit-config.yaml pyproject.toml uv.lock; do
+        if [ ! -f "$f" ]; then
+          echo " - $f"
+          missing=1
+        fi
+      done
+
+      if [ "$missing" -ne 0 ]; then
+        echo "❌ Missing required files (listed above)"
+        exit 1
+      fi
+
+      echo "✅ All required configuration files are present"
+
+check-dependencies:
+  stage: validate
+  extends: .python_job
+  script:
+    - uv lock --check
+
+lint-and-format:
+  stage: validate
+  extends: .python_job
+  needs: []
+  script:
+    - uv sync --frozen --group dev
+    - |
+      set +e
+      uv run ruff check $LINT_PATHS --output-format=gitlab > ruff-report.json
+      RUFF_EXIT=$?
+      uv run ruff format $LINT_PATHS --check
+      FORMAT_EXIT=$?
+      set -e
+
+      test $RUFF_EXIT -le 1 || exit $RUFF_EXIT
+      test $FORMAT_EXIT -eq 0 || exit $FORMAT_EXIT
+      test $RUFF_EXIT -eq 0 || exit 1
+  artifacts:
+    reports:
+      codequality: ruff-report.json
+    when: always
+
+test:
+  stage: test
+  extends: .python_job
+  services:
+    - name: postgres:17
+      alias: postgres
+  variables:
+    POSTGRES_DB: cifra_db
+    POSTGRES_USER: dev_user
+    POSTGRES_PASSWORD: dev_password
+    POSTGRES_HOST_AUTH_METHOD: trust
+    POSTGRES_INITDB_ARGS: "--auth-host=trust"
+    CI_POSTGRES_HOST: postgres
+    CI_POSTGRES_PORT: 5432
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends netcat-openbsd
+    - python -V  # from .python_job
+    - python -m pip install -q uv  # from .python_job
+    - uv --version  # from .python_job
+  script:
+    - uv sync --frozen --group tests
+    - |
+      ready=0
+      for i in $(seq 1 30); do
+        if nc -z $CI_POSTGRES_HOST $CI_POSTGRES_PORT; then
+          echo "postgres is reachable"
+          ready=1
+          break
+        fi
+        sleep 1
+      done
+
+      if [ "$ready" -ne 1 ]; then
+        echo "postgres did not become ready in time"
+        exit 1
+      fi
+    - |
+      uv run pytest tests/ \
+        -v --tb=short \
+        -n auto --dist worksteal \
+        --junitxml=pytest-junit.xml \
+        --cov=src \
+        --cov-report=xml:coverage.xml \
+        --cov-report=term-missing
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  artifacts:
+    when: always
+    reports:
+      junit: pytest-junit.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - pytest-junit.xml
+      - coverage.xml
+
+security-scan:
+  stage: security
+  extends: .python_job
+  needs: []
+  script:
+    - uv sync --frozen --group dev
+    - uv run ruff check $LINT_PATHS --select=S --output-format=gitlab > ruff-security.json || true
+    - |
+      echo "🔍 Checking for potential secrets (tracked YAML/JSON only)..."
+      set +e
+      git grep -nEi "password|secret|key|token" -- '*.yaml' '*.yml' '*.json' \
+        | grep -v -Ei '(example|template)' \
+        | grep -v '\.gitlab-ci\.yml'
+      GREP_EXIT=$?
+      set -e
+
+      if [ "$GREP_EXIT" -eq 0 ]; then
+        echo "⚠️  Potential secrets found (review output above)"
+        exit 1
+      else
+        echo "✅ No obvious secrets found"
+      fi
+  artifacts:
+    reports:
+      codequality: ruff-security.json
+    when: always
+  allow_failure: true
+
+type-check:
+  stage: typecheck
+  extends: .python_job
+  needs: []
+  script:
+    - uv sync --frozen --group dev
+    - uv run mypy $MYPY_PATHS --ignore-missing-imports --no-strict-optional
+  allow_failure: true
+
+build-check:
+  stage: build
+  extends: .python_job
+  needs:
+    - job: lint-and-format
+    - job: test
+    - job: security-scan
+  script:
+    - uv sync --frozen --all-packages --no-group dev
+    - cp .env.example .env
+    - uv run python -c "from src.presentation.api.app import create_app; print('✅ Application imports successfully')"
+
+build-image:
+  stage: build
+  extends: .docker_job
+  needs:
+    - job: build-check
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      changes:
+        - uv.lock
+        - Dockerfile
+    - when: never
+  script:
+    - |
+      set -euo pipefail
+
+      VERSION="$(sed -n '/^\[project\]/,/^\[/{s/^[[:space:]]*version[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p}' pyproject.toml | head -n1)"
+      echo "Project version: $VERSION"
+
+      CACHE_REF="$CI_REGISTRY_IMAGE:buildcache"
+
+      TAGS="-t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA -t $CI_REGISTRY_IMAGE:develop-latest"
+      TAGS="$TAGS -t $CI_REGISTRY_IMAGE:$VERSION"
+
+      echo "Building and pushing image with tags: $TAGS"
+      echo "Using registry cache: $CACHE_REF"
+
+      docker buildx build \
+        --target dev \
+        --build-arg GIT_COMMIT="$CI_COMMIT_SHORT_SHA" \
+        --build-arg GIT_BRANCH="$CI_COMMIT_BRANCH" \
+        --build-arg SENTRY_ENVIRONMENT="$SENTRY_ENVIRONMENT" \
+        --build-arg SENTRY_RELEASE="$SENTRY_RELEASE" \
+        --provenance=false \
+        --cache-from "type=registry,ref=$CACHE_REF" \
+        --cache-to "type=registry,ref=$CACHE_REF,mode=max" \
+        --push \
+        $TAGS \
+        .
+
+promote-image:
+  stage: release
+  extends: .docker_job
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+    - if: '$CI_COMMIT_BRANCH == "prod"'
+    - when: never
+  artifacts:
+    reports:
+      dotenv: sentry-release.env
+  script:
+    - |
+      set -euo pipefail
+
+      SENTRY_RELEASE="$CI_COMMIT_SHORT_SHA"
+      if [ "$CI_COMMIT_BRANCH" = "prod" ]; then
+        SENTRY_ENVIRONMENT="production"
+      else
+        SENTRY_ENVIRONMENT="$CI_COMMIT_BRANCH"
+      fi
+
+      echo "RELEASE=${SENTRY_RELEASE}"
+      echo "ENVIRONMENT=${SENTRY_ENVIRONMENT}"
+
+      echo "SENTRY_RELEASE=${SENTRY_RELEASE}" > sentry-release.env
+      echo "SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT}" >> sentry-release.env
+
+      SRC="$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+      echo "Promoting existing image: $SRC"
+
+      if ! docker manifest inspect "$SRC" >/dev/null 2>&1; then
+        echo "❌ No image found for $SRC"
+        echo "This happens because you only build on $CI_DEFAULT_BRANCH when uv.lock or Dockerfile changes."
+        echo "To promote, first ensure a build ran on $CI_DEFAULT_BRANCH for this exact commit."
+        exit 1
+      fi
+
+      if [ "$CI_COMMIT_BRANCH" = "staging" ]; then
+        T1="$CI_REGISTRY_IMAGE:staging-latest"
+        T2="$CI_REGISTRY_IMAGE:staging-$CI_COMMIT_SHORT_SHA"
+      else
+        T1="$CI_REGISTRY_IMAGE:prod-latest"
+        T2="$CI_REGISTRY_IMAGE:prod-$CI_COMMIT_SHORT_SHA"
+      fi
+
+      echo "Adding tags: $T1 and $T2 -> $SRC"
+
+      BUILDER="ci-builder-$CI_JOB_ID"
+      docker buildx imagetools create \
+        --builder "$BUILDER" \
+        -t "$T1" \
+        -t "$T2" \
+        "$SRC"
+
+      echo "✅ Promotion complete"
+
+create-release:
+  stage: release
+  image: alpine:3.19
+  needs:
+    - job: promote-image
+      artifacts: true
+  variables:
+    GIT_STRATEGY: none
+  before_script:
+    - apk add --no-cache curl jq
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'
+    - if: '$CI_COMMIT_BRANCH == "prod"'
+    - when: never
+  script:
+    - |
+      RELEASE_NAME="$CI_COMMIT_SHORT_SHA ($CI_COMMIT_BRANCH)"
+      RELEASE_TAG="$CI_COMMIT_SHORT_SHA"
+      RELEASE_REF="$CI_COMMIT_SHA"
+
+      echo "Creating release: $RELEASE_NAME"
+
+      curl --request POST \
+        --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+        --header "Content-Type: application/json" \
+        --data "{\"name\":\"$RELEASE_NAME\",\"tag_name\":\"$RELEASE_TAG\",\"ref\":\"$RELEASE_REF\",\"description\":\"## Release notes\\n\\n- **Branch:** $CI_COMMIT_BRANCH\\n- **Commit:** $CI_COMMIT_SHA\\n\\n### Links\\n- $CI_PIPELINE_URL\"}" \
+        "$CI_API_V4_URL/projects/$CI_PROJECT_ID/releases"
+  allow_failure: true
