@@ -1,0 +1,24 @@
+[config]
+model = "kimi-k2.5:cloud"
+fallback_models = ["kimi-k2.5:cloud"]
+large_patch_policy = "clip"
+max_model_tokens = "256000"
+patch_extra_lines_before = "3"
+patch_extra_lines_after = "1"
+
+[pr_reviewer]  # /review
+require_score_review=false
+require_tests_review=true
+require_estimate_effort_to_review=true
+require_can_be_split_review=false
+require_security_review=true
+
+[pr_description]  # /describe
+publish_labels=false
+add_original_user_description=true
+generate_ai_title=true
+
+[pr_code_suggestions]  # /improve
+commitable_code_suggestions = false
+dual_publishing_score_threshold=-1
+focus_only_on_problems=true
