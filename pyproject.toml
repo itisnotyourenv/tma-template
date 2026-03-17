@@ -29,6 +29,7 @@ dependencies = [
 dev = [
     "mypy>=1.9.0",
     "granian[reload]>=2.7.1",
+    "types-pyyaml>=6.0.12.20250915",
 ]
 tests = [
     "factory-boy>=3.3.3",
