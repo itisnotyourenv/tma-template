@@ -1,3 +1,5 @@
+from typing import cast
+
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import (
@@ -79,7 +81,9 @@ async def ref_top_callback(
     top = await interactor(limit)
 
     if not top:
-        await callback.message.edit_text(text=i18n.get("stats-no-inviters"))
+        await cast(Message, callback.message).edit_text(
+            text=i18n.get("stats-no-inviters")
+        )
         await callback.answer()
         return
 
@@ -88,7 +92,7 @@ async def ref_top_callback(
         name = f"@{ref.username}" if ref.username else ref.first_name
         text += f"{i}. {name} — {ref.count}\n"
 
-    await callback.message.edit_text(text=text)
+    await cast(Message, callback.message).edit_text(text=text)
     await callback.answer()
 
 
@@ -132,7 +136,7 @@ async def cb_check_alive_from_stats(callback: CallbackQuery) -> None:
     """Redirect to check alive menu from stats."""
     await callback.answer()
 
-    await callback.message.edit_text(
+    await cast(Message, callback.message).edit_text(
         "Select users to check:",
         reply_markup=check_alive_keyboard,
     )
@@ -168,7 +172,7 @@ async def cb_back_to_stats(
         ]
     )
 
-    await callback.message.edit_text(
+    await cast(Message, callback.message).edit_text(
         text=i18n.get(
             "stats-overview",
             total=stats.total_users,

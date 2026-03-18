@@ -1,5 +1,12 @@
+from typing import cast
+
 from aiogram import Bot, Router
-from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 from dishka.integrations.aiogram import FromDishka, inject
 
 from src.application.admin import (
@@ -82,24 +89,26 @@ async def cb_check_alive_handler(
         active_since_days = int(filter_value.value)
         filter_label = f"users active in last {active_since_days} day(s)"
 
-    await callback.message.edit_text(f"Starting alive check for {filter_label}...")
+    await cast(Message, callback.message).edit_text(
+        f"Starting alive check for {filter_label}..."
+    )
 
     last_result = None
     async for progress in interactor.execute(
         bot=bot, data=CheckAliveInput(active_since_days=active_since_days)
     ):
         last_result = progress.current_result
-        await callback.message.edit_text(
+        await cast(Message, callback.message).edit_text(
             _format_progress(progress.processed, progress.total)
         )
 
     if last_result is None:
-        await callback.message.edit_text(
+        await cast(Message, callback.message).edit_text(
             "No users found.", reply_markup=_build_back_button()
         )
         return
 
-    await callback.message.edit_text(
+    await cast(Message, callback.message).edit_text(
         _format_result(last_result),
         reply_markup=_build_back_button(),
     )
