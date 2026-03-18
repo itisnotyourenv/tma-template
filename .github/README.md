@@ -26,7 +26,7 @@ Edit both files and set `bot_token`, `admin_ids`, `bot_username`, and `auth.secr
 cp .env.example .env
 ```
 
-`.env` controls Docker Compose variables (Postgres credentials, ports, `API_WORKERS`). The defaults in `.env.example` match `config-example.yaml`, so no changes are needed for a first run.
+`.env` controls Docker Compose variables (application name, Postgres credentials, ports, `API_WORKERS`). The defaults in `.env.example` match `config-example.yaml`, so no changes are needed for a first run.
 
 ---
 

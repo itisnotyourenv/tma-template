@@ -1,4 +1,4 @@
-name: "main"
+name: ${APP_NAME}_local
 
 services:
   postgres:
