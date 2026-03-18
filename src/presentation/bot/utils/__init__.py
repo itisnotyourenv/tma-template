@@ -13,9 +13,11 @@ async def edit_or_answer(
     otherwise sends a new message.
     """
     try:
-        if isinstance(update, types.CallbackQuery) and update.message:
+        if isinstance(update, types.CallbackQuery) and isinstance(
+            update.message, types.Message
+        ):
             await update.message.edit_text(text, reply_markup=reply_markup)
-        else:
+        elif isinstance(update, types.Message):
             await update.answer(text, reply_markup=reply_markup)
     except TelegramBadRequest:
         # Fallback if editing fails (e.g., message content is identical)

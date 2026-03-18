@@ -1,5 +1,5 @@
 [project]
-name = "tg-app"
+name = "template-app"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -10,31 +10,35 @@ dependencies = [
     "alembic>=1.16.2",
     "asyncpg>=0.30.0",
     "dishka>=1.6.0",
-    "factory-boy>=3.3.3",
     "fluent-compiler>=1.0",
     "fluentogram>=1.1.1",
     "greenlet>=3.2.3",
     "litestar[jwt]>=2.16.0",
     "pydantic>=2.11.7",
-    "pytest-asyncio>=1.1.0",
-    "pytest-cov>=6.0.0",
-    "pytest>=8.4.1",
-    "pytest-xdist>=3.5.0",
     "pyyaml>=6.0.2",
     "pre-commit>=4.0.1",
     "ruff>=0.12.5",
     "sqlalchemy>=2.0.41",
     "ty>=0.0.1a16",
     "gunicorn>=23.0.0",
-    "pytest-timeout>=2.4.0",
-    "pytest-sugar>=1.1.1",
-    "pytest-randomly>=3.16.0",
     "granian>=2.7.1",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "mypy>=1.9.0",
+    "granian[reload]>=2.7.1",
+    "types-pyyaml>=6.0.12.20250915",
+]
+tests = [
+    "factory-boy>=3.3.3",
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.0.0",
+    "pytest-randomly>=4.0.1",
+    "pytest-sugar>=1.1.1",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.8.0",
 ]
 
 
@@ -187,9 +191,4 @@ max-statements = 50
 [tool.coverage.run]
 omit = [
     "src/presentation/bot/**/*",
-]
-
-[dependency-groups]
-dev = [
-    "granian[reload]>=2.7.1",
 ]

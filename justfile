@@ -31,9 +31,9 @@ app-logs:
 # Development setup
 setup:
     docker compose up -d postgres
-    @echo "PostgreSQL is starting up..."
-    @echo "Database will be available at localhost:5432"
-    @echo "Connection: postgresql://dev_user:dev_password@localhost:5432/ask_app"
+    echo "PostgreSQL is starting up..."
+    echo "Database will be available at localhost:5432"
+    echo "Connection: postgresql://dev_user:dev_password@localhost:5432/template_app"
 
 # Clean up
 clean:
