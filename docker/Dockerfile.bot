@@ -11,4 +11,7 @@ COPY . .
 
 ENV PYTHONPATH=/app/src
 
-CMD ["uv", "run", "python", "-m", "src.presentation.bot.main"]
+COPY docker/entrypoint-bot.sh /entrypoint-bot.sh
+RUN chmod +x /entrypoint-bot.sh
+
+ENTRYPOINT ["/entrypoint-bot.sh"]

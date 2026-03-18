@@ -19,7 +19,7 @@ services:
   alembic:
     build:
       context: .
-      dockerfile: Dockerfile.bot
+      dockerfile: docker/Dockerfile.bot
     command: ["uv", "run", "alembic", "upgrade", "head"]
     volumes:
       - ./config-prod.yaml:/app/config.yaml:ro
@@ -30,7 +30,7 @@ services:
   bot:
     build:
       context: .
-      dockerfile: Dockerfile.bot
+      dockerfile: docker/Dockerfile.bot
     volumes:
       - ./config-prod.yaml:/app/config.yaml:ro
     depends_on:
@@ -40,7 +40,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: docker/Dockerfile.api
     ports:
       - "8000:8000"
     environment:

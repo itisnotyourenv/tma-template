@@ -14,7 +14,7 @@ ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-COPY entrypoint-api.sh /entrypoint-api.sh
+COPY docker/entrypoint-api.sh /entrypoint-api.sh
 RUN chmod +x /entrypoint-api.sh
 
 ENTRYPOINT ["/entrypoint-api.sh"]
