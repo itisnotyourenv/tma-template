@@ -11,11 +11,18 @@ jobs:
       issues: write
       pull-requests: write
       contents: write
+    name: Run pr agent on every pull request, respond to user comments
     steps:
       - name: PR Agent action step
         uses: arynyklas/pr-agent@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          config.model: "ollama/kimi-k2.5:cloud"
+          config.fallback_models: '["ollama/kimi-k2.5:cloud"]'
+          config.large_patch_policy: "clip"
+          config.max_model_tokens: "256000"
+          config.patch_extra_lines_before: "3"
+          config.patch_extra_lines_after: "1"
           config.custom_model_max_tokens: "256000"
           ollama.API_BASE: "https://ollama.com"
           ollama.API_KEY: ${{ secrets.PR_AGENT_API_KEY }}
