@@ -15,10 +15,10 @@ jobs:
       - name: PR Agent action step
         uses: arynyklas/pr-agent@main
         env:
-          OPENAI_KEY: ${{ secrets.PR_AGENT_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           config.custom_model_max_tokens: "256000"
-          openai.API_BASE: "https://ollama.com"
+          ollama.API_BASE: "https://ollama.com"
+          ollama.API_KEY: ${{ secrets.PR_AGENT_API_KEY }}
           github_action_config.auto_review: "true"
           github_action_config.auto_describe: "true"
           github_action_config.auto_improve: "true"
