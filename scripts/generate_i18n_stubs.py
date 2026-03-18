@@ -75,18 +75,17 @@ def generate_types_content(all_keys: dict[str, list[str]]) -> str:
         "Do not edit manually - regenerate with: uv run python scripts/generate_i18n_stubs.py",
         '"""',
         "",
-        "from typing import TYPE_CHECKING, TypeVar",
+        "from typing import TYPE_CHECKING",
         "",
         "if TYPE_CHECKING:",
-        '    _I18nArg = TypeVar("_I18nArg", str, int)',
+        "    from fluentogram import TranslatorRunner as _TranslatorRunner",
         "",
-        "    class TranslatorRunner:",
+        "    type _I18nArg = str | int | float",
+        "",
+        "    class TranslatorRunner(_TranslatorRunner):",
         '        """Type stubs for FluentTranslator with all available translation keys."""',
         "",
-        "        def get(self, key: str, **kwargs: _I18nArg) -> str: ...",
-        "",
     ]
-
     for key, params in sorted(all_keys.items()):
         # Convert kebab-case to snake_case for method name
         method_name = key.replace("-", "_")

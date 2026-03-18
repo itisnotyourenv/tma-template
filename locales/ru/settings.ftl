@@ -1,18 +1,18 @@
 # Сообщения настроек
-settings-title = ⚙️ Настройки
+settings_title = ⚙️ Настройки
 
     Выберите опцию:
-settings-language-title = 🌐 Язык
+settings_language_title = 🌐 Язык
 
     Выберите язык:
-settings-language-changed = ✅ Язык успешно изменён.
+settings_language_changed = ✅ Язык успешно изменён.
 
 # Онбординг
-onboarding-language = 🌐 Пожалуйста, выберите язык:
+onboarding_language = 🌐 Пожалуйста, выберите ваш язык:
 
 # Кнопки
-btn-language = 🌐 Язык
-btn-settings = ⚙️ Настройки
-btn-back = ↩️ Назад
-lang-en = 🇬🇧 English
-lang-ru = 🇷🇺 Русский
+btn_language = 🌐 Язык
+btn_settings = ⚙️ Настройки
+btn_back = ↩️ Назад
+lang_en = 🇬🇧 English
+lang_ru = 🇷🇺 Русский

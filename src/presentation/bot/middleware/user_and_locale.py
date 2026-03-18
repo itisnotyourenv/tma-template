@@ -8,13 +8,13 @@ from aiogram.types import TelegramObject
 from aiogram.types import User as AiogramUser
 from dishka import AsyncContainer
 from dishka.integrations.aiogram import CONTAINER_NAME
-from fluentogram import TranslatorHub
 
 from src.application.user.create import CreateUserInteractor
 from src.application.user.dtos import (
     CreateUserInputDTO,
     CreateUserOutputDTO,
 )
+from src.infrastructure.i18n import TranslatorHub
 from src.presentation.bot.utils.i18n import extract_language_code
 
 

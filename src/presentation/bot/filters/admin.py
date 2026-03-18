@@ -11,4 +11,7 @@ class AdminFilter(Filter):
             obj (Update): Aiogram injects it to the the filter.
             config (Config): Aiogram injects it to the the filter.
         """
+        if obj.from_user is None:
+            return False
+
         return obj.from_user.id in config.telegram.admin_ids

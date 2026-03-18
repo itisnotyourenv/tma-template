@@ -3,9 +3,8 @@
 from pathlib import Path
 
 from dishka import Provider, Scope, provide
-from fluentogram import TranslatorHub
 
-from .hub import create_translator_hub
+from .hub import TranslatorHub, create_translator_hub
 
 
 class I18nProvider(Provider):

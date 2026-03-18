@@ -3,12 +3,11 @@ from unittest.mock import AsyncMock, MagicMock
 
 from aiogram.filters import CommandObject
 from aiogram.types import Message, User
-from fluentogram import TranslatorHub
 import pytest
 
 from src.application.referral.process import ProcessReferralInteractor
 from src.application.user.dtos import CreateUserOutputDTO
-from src.infrastructure.i18n import create_translator_hub
+from src.infrastructure.i18n import TranslatorHub, create_translator_hub
 from src.presentation.bot.routers.commands import command_start_handler
 
 

@@ -1,6 +1,8 @@
+from typing import cast
+
 from aiogram import Router
 from aiogram.filters import CommandObject, CommandStart
-from aiogram.types import Message
+from aiogram.types import Message, User
 from dishka.integrations.aiogram import FromDishka, inject
 
 from src.application.referral.process import (
@@ -8,7 +10,7 @@ from src.application.referral.process import (
     ProcessReferralInteractor,
 )
 from src.application.user.dtos import CreateUserOutputDTO
-from src.infrastructure.i18n.types import TranslatorRunner
+from src.infrastructure.i18n import TranslatorRunner
 from src.presentation.bot.utils.markups.settings import (
     get_onboarding_language_keyboard,
     get_welcome_keyboard,
@@ -41,7 +43,7 @@ async def _start_onboarding(
 ) -> None:
     """Start onboarding by asking user to select language."""
     await message.answer(
-        text=i18n.get("onboarding-language"),
+        text=i18n.onboarding_language(),
         reply_markup=get_onboarding_language_keyboard(),
     )
 
@@ -59,13 +61,13 @@ async def command_start_handler(
     if user.is_new:
         # Process referral for new users only
         await _process_referral_if_applicable(
-            message.from_user.id, command, process_referral
+            cast(User, message.from_user).id, command, process_referral
         )
         # New users: show onboarding language selection
         await _start_onboarding(message, i18n)
         return
 
     await message.answer(
-        text=i18n.get("welcome", name=user.first_name),
+        text=i18n.welcome(name=user.first_name),
         reply_markup=get_welcome_keyboard(i18n),
     )

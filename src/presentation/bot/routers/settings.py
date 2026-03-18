@@ -3,7 +3,6 @@ import logging
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 from dishka.integrations.aiogram import FromDishka, inject
-from fluentogram import TranslatorHub
 
 from src.application.user.interactors.update_language import (
     UpdateLanguageDTO,
@@ -11,7 +10,7 @@ from src.application.user.interactors.update_language import (
 )
 from src.domain.user import UserRepository
 from src.domain.user.vo import LanguageCode, UserId
-from src.infrastructure.i18n.types import TranslatorRunner
+from src.infrastructure.i18n import TranslatorHub, TranslatorRunner
 from src.presentation.bot.utils import edit_or_answer
 from src.presentation.bot.utils.cb_data import (
     LanguageCBData,
@@ -39,7 +38,7 @@ async def settings_menu(
     logger.info("User %s opened settings menu", callback.from_user.id)
     await edit_or_answer(
         update=callback,
-        text=i18n.get("settings-title"),
+        text=i18n.settings_title(),
         reply_markup=get_settings_keyboard(i18n),
     )
     await callback.answer()
@@ -60,7 +59,7 @@ async def language_menu(
 
     await edit_or_answer(
         update=callback,
-        text=i18n.get("settings-language-title"),
+        text=i18n.settings_language_title(),
         reply_markup=get_language_keyboard(i18n, current_language),
     )
     await callback.answer()
@@ -93,7 +92,7 @@ async def change_language(
 
     await edit_or_answer(
         update=callback,
-        text=i18n.get("settings-language-changed"),
+        text=i18n.settings_language_changed(),
         reply_markup=get_settings_keyboard(i18n),
     )
     await callback.answer()
@@ -113,7 +112,7 @@ async def back_to_main_menu(
 
     await edit_or_answer(
         update=callback,
-        text=i18n.get("welcome", name=user.first_name.value if user else "User"),
+        text=i18n.welcome(name=user.first_name.value if user else "User"),
         reply_markup=get_welcome_keyboard(i18n),
     )
     await callback.answer()

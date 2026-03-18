@@ -66,6 +66,9 @@ lint:
     uv run ruff format src tests
     uv run ruff check src tests --fix
 
+type-check:
+    uv run mypy src/ --ignore-missing-imports --no-strict-optional
+
 generate-i18n:
     uv run python scripts/generate_i18n_stubs.py
     uv run ruff format src/infrastructure/i18n/types.py

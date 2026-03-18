@@ -1,9 +1,13 @@
 """TranslatorHub factory and utilities for i18n."""
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from fluent_compiler.bundle import FluentBundle
-from fluentogram import FluentTranslator, TranslatorHub
+from fluentogram import FluentTranslator
+from fluentogram import TranslatorHub as BaseTranslatorHub
+
+from .types import TranslatorRunner
 
 SUPPORTED_LANGUAGES = ("en", "ru")
 DEFAULT_LANGUAGE = "en"
@@ -20,6 +24,15 @@ def load_ftl_files(locale_dir: Path, language: str) -> str:
         ftl_content.append(ftl_file.read_text(encoding="utf-8"))
 
     return "\n\n".join(ftl_content)
+
+
+class TranslatorHub(BaseTranslatorHub):
+    """Custom TranslatorHub that loads translations from .ftl files in a directory."""
+
+    if TYPE_CHECKING:
+
+        def get_translator_by_locale(self, locale: str) -> TranslatorRunner:
+            return super().get_translator_by_locale(locale)  # type: ignore[return-value]
 
 
 def create_translator_hub(locale_dir: Path | None = None) -> TranslatorHub:
