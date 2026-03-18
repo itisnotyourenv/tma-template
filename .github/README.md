@@ -1,99 +1,149 @@
-# Setup project
+# TMA Template
+
+Production-ready Telegram Mini App template. Ships a **Litestar** REST API (served by Granian) and an **aiogram 3** Telegram bot with shared PostgreSQL storage, Alembic migrations, Dishka DI, and Fluent i18n.
+
+**Requirements:** Python 3.13+, [uv](https://docs.astral.sh/uv/), Docker, [`just`](https://github.com/casey/just) (optional but recommended)
+
+---
 
 ## 1. Prepare files
 
-#### 1.1 Copy `config-example.yaml` to `config-local.yaml` (for tests)
+### 1.1. Copy config template
+
 ```shell
+# For local development (API + bot)
+cp config-example.yaml config.yaml
+
+# For running tests (points to the test database)
 cp config-example.yaml config-local.yaml
 ```
 
-#### 1.2. Copy `config-example.yaml` to `config.yaml` (for local development)
-```shell
-cp config-example.yaml config.yaml
-```
+Edit both files and set `bot_token`, `admin_ids`, `bot_username`, and `auth.secret_key`.
 
-#### 1.3. Paste BOT Token and init-data from your BOT to the config files
+### 1.2. Copy environment file
 
-#### 1.4. Create and configure .env file
 ```shell
 cp .env.example .env
-# Edit .env and set your database credentials if needed
 ```
 
-## 2. Setup UV for this project
+`.env` controls Docker Compose variables (Postgres credentials, ports, `API_WORKERS`). The defaults in `.env.example` match `config-example.yaml`, so no changes are needed for a first run.
 
-#### 2.1. Create a virtual environment
+---
+
+## 2. Install dependencies
+
 ```shell
 uv venv
-```
-
-#### 2.2. Install dependencies from `pyproject.toml`
-```shell
 uv sync
 ```
 
+---
 
-## 3. Ensure everything works
-#### 3.1 Run tests
+## 3. Set up pre-commit
+
 ```shell
-docker compose -f docker-compose-test.yml up --build -d
-uv run pytest
+pre-commit install
+```
+
+Hooks run `ruff check --fix`, `ruff format`, and a security-only ruff pass on every commit.
+
+---
+
+## 4. Run tests
+
+```shell
+docker compose -f docker-compose-test.yml up -d
+uv run pytest -n auto -ss -vv --maxfail=1
 docker compose -f docker-compose-test.yml down -v
 ```
 
-## 4. Local Development
+Or with `just`:
 
-#### 4.1 Start Postgres
 ```shell
-docker compose up -d
+just test
 ```
 
-#### 4.2 Run migrations
+Coverage threshold is 90%.
+
+---
+
+## 5. Local development
+
+### 5.1. Start Postgres
+
+```shell
+docker compose up -d
+# or
+just db-up
+```
+
+### 5.2. Apply migrations
+
 ```shell
 uv run alembic upgrade head
 ```
 
-#### 4.3 Run Litestar API
+### 5.3. Run the API server
+
 ```shell
-uv run uvicorn src.presentation.api.app:create_app --host 0.0.0.0 --port 8080
+uv run granian src.presentation.api.app:create_app --factory --port 8080 --interface asgi --log --access-log --reload
+# or
+just api
 ```
 
-#### 4.4 Run Telegram Bot
+Listens on `http://localhost:8080`.
+
+### 5.4. Run the Telegram bot
+
 ```shell
 uv run python -m src.presentation.bot.main
+# or
+just bot
 ```
 
-## 5. Production Deployment
+---
 
-#### 5.1 Create production config
+## 6. Production deployment
+
+### 6.1. Create production config
+
 ```shell
 cp config-example.yaml config-prod.yaml
 # Edit config-prod.yaml with production values
 ```
 
-#### 5.2 Start all services
+### 6.2. Start all services
+
 ```shell
 docker compose -f docker-compose.prod.yml up -d
 ```
 
 This starts:
-- Postgres database
-- Alembic migrations (runs automatically)
-- Telegram Bot
-- API server (port 8000)
 
-#### 5.3 View logs
+- Postgres (no exposed port)
+- Alembic migration runner (one-shot, runs before app starts)
+- Telegram bot
+- API server (host port **8000**)
+
+### 6.3. View logs
+
 ```shell
 docker compose -f docker-compose.prod.yml logs -f
 ```
 
-#### 5.4 Stop services
+### 6.4. Stop services
+
 ```shell
 docker compose -f docker-compose.prod.yml down
 ```
 
-# Setup Pre-Commit
-### 1. Initialize pre-commit
+---
+
+## Linting
+
 ```shell
-pre-commit install
+uv run ruff format src tests
+uv run ruff check src tests --fix
+# or
+just lint
 ```
