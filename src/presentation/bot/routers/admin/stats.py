@@ -7,6 +7,7 @@ from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
+    User,
 )
 from dishka.integrations.aiogram import FromDishka, inject
 from fluentogram import TranslatorHub
@@ -19,6 +20,7 @@ from src.presentation.bot.utils.admin_cb_data import (
     StatsCBData,
 )
 from src.presentation.bot.utils.i18n import extract_language_code
+from src.presentation.bot.utils.inaccessible_message import process_inaccessible_message
 
 router = Router(name="admin_stats")
 
@@ -31,7 +33,7 @@ async def stats_handler(
     interactor: FromDishka[GetStatsInteractor],
 ) -> None:
     """Handle /stats admin command."""
-    locale = extract_language_code(message.from_user.language_code)
+    locale = extract_language_code(cast(User, message.from_user).language_code)
     i18n = hub.get_translator_by_locale(locale)
 
     stats = await interactor()
@@ -74,6 +76,9 @@ async def ref_top_callback(
     interactor: FromDishka[GetTopReferrersInteractor],
 ) -> None:
     """Handle top referrers callback."""
+    if not (message := await process_inaccessible_message(callback)):
+        return
+
     locale = extract_language_code(callback.from_user.language_code)
     i18n = hub.get_translator_by_locale(locale)
 
@@ -81,9 +86,7 @@ async def ref_top_callback(
     top = await interactor(limit)
 
     if not top:
-        await cast(Message, callback.message).edit_text(
-            text=i18n.get("stats-no-inviters")
-        )
+        await message.edit_text(text=i18n.get("stats-no-inviters"))
         await callback.answer()
         return
 
@@ -92,7 +95,7 @@ async def ref_top_callback(
         name = f"@{ref.username}" if ref.username else ref.first_name
         text += f"{i}. {name} — {ref.count}\n"
 
-    await cast(Message, callback.message).edit_text(text=text)
+    await message.edit_text(text=text)
     await callback.answer()
 
 
@@ -134,9 +137,12 @@ check_alive_keyboard = InlineKeyboardMarkup(
 @router.callback_query(StatsCBData.filter(F.action == StatsCBAction.CHECK_ALIVE))
 async def cb_check_alive_from_stats(callback: CallbackQuery) -> None:
     """Redirect to check alive menu from stats."""
+    if not (message := await process_inaccessible_message(callback)):
+        return
+
     await callback.answer()
 
-    await cast(Message, callback.message).edit_text(
+    await message.edit_text(
         "Select users to check:",
         reply_markup=check_alive_keyboard,
     )
@@ -150,6 +156,9 @@ async def cb_back_to_stats(
     interactor: FromDishka[GetStatsInteractor],
 ) -> None:
     """Return to stats view."""
+    if not (message := await process_inaccessible_message(callback)):
+        return
+
     locale = extract_language_code(callback.from_user.language_code)
     i18n = hub.get_translator_by_locale(locale)
 
@@ -172,7 +181,7 @@ async def cb_back_to_stats(
         ]
     )
 
-    await cast(Message, callback.message).edit_text(
+    await message.edit_text(
         text=i18n.get(
             "stats-overview",
             total=stats.total_users,
