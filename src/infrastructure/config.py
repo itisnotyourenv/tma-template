@@ -11,6 +11,12 @@ class PostgresConfig(BaseModel):
     password: str
     db: str
     echo: bool = False
+    pool_size: int = 30
+    pool_timeout: int = 30
+    pool_recycle: int = 3600
+    max_overflow: int = 20
+    pool_pre_ping: bool = True
+    echo_pool: bool = False
 
     @property
     def url(self) -> str:
