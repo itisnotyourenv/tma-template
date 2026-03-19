@@ -21,13 +21,6 @@ db-down:
 db-logs:
     docker compose logs -f postgres
 
-# Application
-app-up:
-    docker compose up -d app
-
-app-logs:
-    docker compose logs -f app
-
 # Development setup
 setup:
     docker compose up -d postgres
