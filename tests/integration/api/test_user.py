@@ -13,6 +13,9 @@ class TestUserProfile:
         self, test_client: AsyncClient, test_config: Config
     ) -> str:
         """Helper method to get a valid JWT token for testing."""
+        if not test_config.telegram.tg_init_data:
+            raise ValueError("Telegram init data must be provided in test config")
+
         auth_data = {"initData": test_config.telegram.tg_init_data}
 
         response = await test_client.post("auth", json=auth_data)

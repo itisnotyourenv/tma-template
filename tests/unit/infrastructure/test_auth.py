@@ -16,7 +16,7 @@ class TestAuthServiceImpl:
     def mock_config(self):
         config = Mock(spec=Config)
         auth_config = Mock()
-        auth_config.secret_key = "test-secret-key"
+        auth_config.secret_key = "3d1b2a2127de6f65804364813b3107b2"
         auth_config.algorithm = "HS256"
         auth_config.access_token_expire_minutes = 30
         config.auth = auth_config

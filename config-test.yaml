@@ -13,7 +13,7 @@ postgres:
   db: "template_app"
 
 auth:
-  secret_key: "secret"
+  secret_key: "3d1b2a2127de6f65804364813b3107b2"
   algorithm: "HS256"
   access_token_expire_minutes: 30
 

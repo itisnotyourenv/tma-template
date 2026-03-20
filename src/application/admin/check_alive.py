@@ -59,16 +59,16 @@ class CheckAliveInteractor:
             return UserCheckResult(user_id=user_id, success=True)
         except TelegramForbiddenError:
             return UserCheckResult(user_id=user_id, success=False, error_type="blocked")
-        except TelegramBadRequest as e:
-            if "chat not found" in str(e).lower():
+        except TelegramBadRequest as ex:
+            if "chat not found" in str(ex).lower():
                 return UserCheckResult(
                     user_id=user_id, success=False, error_type="deleted"
                 )
-            logger.warning("TelegramBadRequest for user %d: %s", user_id, e)
+            logger.warning("TelegramBadRequest for user %d: %s", user_id, ex)
             return UserCheckResult(user_id=user_id, success=False, error_type="other")
-        except TelegramRetryAfter as e:
-            logger.warning("Rate limited, waiting %d seconds", e.retry_after)
-            await asyncio.sleep(e.retry_after)
+        except TelegramRetryAfter as ex:
+            logger.warning("Rate limited, waiting %d seconds", ex.retry_after)
+            await asyncio.sleep(ex.retry_after)
             return UserCheckResult(
                 user_id=user_id, success=False, error_type="rate_limited"
             )

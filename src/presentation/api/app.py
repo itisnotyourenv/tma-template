@@ -36,8 +36,8 @@ def prepare_app(config: Config) -> Litestar:
         route_handlers=[routes],
         on_app_init=[jwt_auth.on_app_init],
         openapi_config=OpenAPIConfig(
-            title="TG app API",
-            description="API for TG app",
+            title="TMA API",
+            description="API for TMA",
             version="0.1.0",
             render_plugins=[ScalarRenderPlugin()],
         ),

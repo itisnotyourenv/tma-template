@@ -110,7 +110,7 @@ class TestPostgresConfig:
             ("invalid_port", False, True),  # Invalid port type
             (5432, "invalid", True),  # Invalid echo type
             (-1, False, True),  # Negative port
-            (65536, False, False),  # High port (valid)
+            (65536, False, True),  # High port (invalid)
             (5432, True, False),  # Valid config
             (3306, False, False),  # Valid different port
         ],
@@ -141,7 +141,6 @@ class TestPostgresConfig:
     @pytest.mark.parametrize(
         "port,expected",
         [
-            (0, 0),
             (5432, 5432),
             (65535, 65535),
             (1, 1),
@@ -154,16 +153,31 @@ class TestPostgresConfig:
         )
         assert config.port == expected
 
+    @pytest.mark.parametrize(
+        "port",
+        [
+            0,  # Port number too low
+            65536,  # Port number too high
+            -1,  # Negative port number
+            "not-a-number",  # Invalid type
+        ],
+    )
+    def test_invalid_ports(self, port):
+        with pytest.raises(ValidationError):
+            PostgresConfig(
+                host="localhost", port=port, user="user", password="pass", db="db"
+            )
+
 
 class TestAuthConfig:
     def test_valid_config(self):
         config = AuthConfig(
-            secret_key="test_secret_key",
+            secret_key="3d1b2a2127de6f65804364813b3107b2",
             algorithm="HS256",
             access_token_expire_minutes=30,
         )
 
-        assert config.secret_key == "test_secret_key"
+        assert config.secret_key == "3d1b2a2127de6f65804364813b3107b2"
         assert config.algorithm == "HS256"
         assert config.access_token_expire_minutes == 30
 
@@ -185,13 +199,13 @@ class TestAuthConfig:
         if should_raise:
             with pytest.raises(ValidationError):
                 AuthConfig(
-                    secret_key="test_secret_key",
+                    secret_key="3d1b2a2127de6f65804364813b3107b2",
                     algorithm="HS256",
                     access_token_expire_minutes=expire_minutes,
                 )
         else:
             config = AuthConfig(
-                secret_key="test_secret_key",
+                secret_key="3d1b2a2127de6f65804364813b3107b2",
                 algorithm="HS256",
                 access_token_expire_minutes=expire_minutes,
             )
@@ -254,7 +268,7 @@ class TestConfig:
             host="localhost", port=5432, user="user", password="pass", db="db"
         )
         auth_config = AuthConfig(
-            secret_key="test_secret_key",
+            secret_key="3d1b2a2127de6f65804364813b3107b2",
             algorithm="HS256",
             access_token_expire_minutes=30,
         )
@@ -296,7 +310,7 @@ class TestLoadConfig:
                 "echo": True,
             },
             "auth": {
-                "secret_key": "test_secret_key",
+                "secret_key": "3d1b2a2127de6f65804364813b3107b2",
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
@@ -321,7 +335,7 @@ class TestLoadConfig:
             assert config.postgres.password == "test_pass"
             assert config.postgres.db == "test_db"
             assert config.postgres.echo is True
-            assert config.auth.secret_key == "test_secret_key"
+            assert config.auth.secret_key == "3d1b2a2127de6f65804364813b3107b2"
             assert config.auth.algorithm == "HS256"
             assert config.auth.access_token_expire_minutes == 30
             assert config.telegram.bot_token == "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
@@ -338,7 +352,7 @@ class TestLoadConfig:
                 "db": "db",
             },
             "auth": {
-                "secret_key": "test_secret_key",
+                "secret_key": "3d1b2a2127de6f65804364813b3107b2",
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
@@ -357,7 +371,7 @@ class TestLoadConfig:
 
                 assert isinstance(config, Config)
                 assert config.postgres.host == "localhost"
-                assert config.auth.secret_key == "test_secret_key"
+                assert config.auth.secret_key == "3d1b2a2127de6f65804364813b3107b2"
                 assert (
                     config.telegram.bot_token == "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
                 )
@@ -437,7 +451,7 @@ class TestLoadConfig:
                 "extra_field": "ignored",
             },
             "auth": {
-                "secret_key": "test_secret_key",
+                "secret_key": "3d1b2a2127de6f65804364813b3107b2",
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
@@ -471,7 +485,7 @@ class TestLoadConfig:
                 "echo": False,
             },
             "auth": {
-                "secret_key": "test_secret_key",
+                "secret_key": "3d1b2a2127de6f65804364813b3107b2",
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },
@@ -500,7 +514,7 @@ class TestLoadConfig:
                 "db": "db",
             },
             "auth": {
-                "secret_key": "test_secret_key",
+                "secret_key": "3d1b2a2127de6f65804364813b3107b2",
                 "algorithm": "HS256",
                 "access_token_expire_minutes": 30,
             },

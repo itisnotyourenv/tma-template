@@ -22,6 +22,9 @@ class TestAuth:
     async def test_auth_success_for_new_user(
         self, test_client: AsyncClient, test_config: Config
     ):
+        if not test_config.telegram.tg_init_data:
+            raise ValueError("Telegram init data must be provided in test config")
+
         data = {"initData": test_config.telegram.tg_init_data}
 
         response = await test_client.post(self.url, json=data)

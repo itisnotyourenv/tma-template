@@ -18,9 +18,9 @@ class AuthServiceImpl(AuthService):
             parsed_data = safe_parse_webapp_init_data(
                 self.config.telegram.bot_token, init_data
             )
-        except ValueError as err:
+        except ValueError as ex:
             error_msg = f"Invalid init data '{init_data}'"
-            raise InvalidInitDataError(message=error_msg) from err
+            raise InvalidInitDataError(message=error_msg) from ex
 
         if parsed_data.user is None:
             error_msg = f"Invalid init data '{init_data}'"
@@ -32,9 +32,11 @@ class AuthServiceImpl(AuthService):
             first_name=parsed_data.user.first_name,
             last_name=parsed_data.user.last_name,
             start_param=parsed_data.start_param,
-            ui_language_code=parsed_data.user.language_code
-            if parsed_data.user.language_code
-            else None,
+            ui_language_code=(
+                parsed_data.user.language_code
+                if parsed_data.user.language_code
+                else None
+            ),
         )
 
     def create_access_token(self, user_id: int) -> str:
@@ -47,12 +49,3 @@ class AuthServiceImpl(AuthService):
             secret=self.config.auth.secret_key,
             algorithm=self.config.auth.algorithm,
         )
-
-
-if __name__ == "__main__":
-    from src.infrastructure.config import load_config
-
-    config = load_config(file_name="new-config.yaml")
-
-    auth_service = AuthServiceImpl(config)
-    auth_service.validate_init_data(init_data=config.telegram.tg_init_data)

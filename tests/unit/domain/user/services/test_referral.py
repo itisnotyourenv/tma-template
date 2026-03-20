@@ -6,7 +6,7 @@ from src.domain.user.services.referral import decode_referral, encode_referral
 class TestReferralEncoding:
     def test_encode_decode_roundtrip(self) -> None:
         user_id = 123456789
-        secret_key = "test-secret-key"
+        secret_key = "6e3a96b53190640c8c43be70720b6e4e"
 
         code = encode_referral(user_id, secret_key)
         decoded = decode_referral(code, secret_key)
@@ -15,7 +15,7 @@ class TestReferralEncoding:
 
     def test_encode_produces_url_safe_string(self) -> None:
         user_id = 987654321
-        secret_key = "my-secret"
+        secret_key = "6e3a96b53190640c8c43be70720b6e4e"
 
         code = encode_referral(user_id, secret_key)
 
@@ -23,9 +23,9 @@ class TestReferralEncoding:
 
     def test_decode_with_wrong_key_returns_different_id(self) -> None:
         user_id = 123456789
-        code = encode_referral(user_id, "correct-key")
+        code = encode_referral(user_id, "6e3a96b53190640c8c43be70720b6e4e")
 
-        decoded = decode_referral(code, "wrong-key")
+        decoded = decode_referral(code, "6e3a96b53190640c8c43be70720b6e4e-wrong")
 
         assert decoded != user_id
 
@@ -35,7 +35,7 @@ class TestReferralEncoding:
         assert result is None
 
     def test_different_users_get_different_codes(self) -> None:
-        secret = "shared-secret"
+        secret = "6e3a96b53190640c8c43be70720b6e4e"
 
         code1 = encode_referral(111, secret)
         code2 = encode_referral(222, secret)
@@ -44,7 +44,7 @@ class TestReferralEncoding:
 
     @pytest.mark.parametrize("user_id", [1, 100, 999999999, 9223372036854775807])
     def test_handles_various_user_ids(self, user_id: int) -> None:
-        secret = "test-secret"
+        secret = "6e3a96b53190640c8c43be70720b6e4e"
         code = encode_referral(user_id, secret)
         decoded = decode_referral(code, secret)
         assert decoded == user_id

@@ -30,8 +30,8 @@ async def notify_admins_on_startup(
     for admin_id in config.telegram.admin_ids:
         try:
             await bot.send_message(chat_id=admin_id, text=i18n.bot_started())
-        except TelegramAPIError as e:
-            logging.warning("Failed to notify admin %s: %s", admin_id, e)
+        except TelegramAPIError as ex:
+            logging.warning("Failed to notify admin %s: %s", admin_id, ex)
 
 
 async def main() -> None:

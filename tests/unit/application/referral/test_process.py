@@ -12,7 +12,7 @@ from src.domain.user.services.referral import encode_referral
 
 @pytest.fixture
 def secret_key() -> str:
-    return "test-secret-key"
+    return "6e3a96b53190640c8c43be70720b6e4e"
 
 
 @pytest.fixture

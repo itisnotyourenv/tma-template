@@ -15,7 +15,7 @@ from src.domain.user.vo import FirstName, ReferralCount, UserId
 
 @pytest.fixture
 def secret_key() -> str:
-    return "test-secret"
+    return "6e3a96b53190640c8c43be70720b6e4e"
 
 
 @pytest.fixture
