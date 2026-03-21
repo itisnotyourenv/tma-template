@@ -365,16 +365,18 @@ class TestLoadConfig:
 
         yaml_content = yaml.dump(config_data)
 
-        with patch("builtins.open", mock_open(read_data=yaml_content)):
-            with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
-                config = load_config()
+        with patch("pathlib.Path.is_file", return_value=True):
+            with patch("builtins.open", mock_open(read_data=yaml_content)):
+                with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
+                    config = load_config()
 
-                assert isinstance(config, Config)
-                assert config.postgres.host == "localhost"
-                assert config.auth.secret_key == "3d1b2a2127de6f65804364813b3107b2"
-                assert (
-                    config.telegram.bot_token == "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
-                )
+                    assert isinstance(config, Config)
+                    assert config.postgres.host == "localhost"
+                    assert config.auth.secret_key == "3d1b2a2127de6f65804364813b3107b2"
+                    assert (
+                        config.telegram.bot_token
+                        == "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+                    )
 
     def test_load_config_missing_file(self):
         with pytest.raises(FileNotFoundError):
@@ -383,10 +385,11 @@ class TestLoadConfig:
     def test_load_config_invalid_yaml(self):
         invalid_yaml = "invalid: yaml: content: ["
 
-        with patch("builtins.open", mock_open(read_data=invalid_yaml)):
-            with patch("pathlib.Path.open", mock_open(read_data=invalid_yaml)):
-                with pytest.raises(yaml.YAMLError):
-                    load_config("invalid.yaml")
+        with patch("pathlib.Path.is_file", return_value=True):
+            with patch("builtins.open", mock_open(read_data=invalid_yaml)):
+                with patch("pathlib.Path.open", mock_open(read_data=invalid_yaml)):
+                    with pytest.raises(yaml.YAMLError):
+                        load_config("invalid.yaml")
 
     def test_load_config_invalid_schema(self):
         config_data = {
@@ -401,26 +404,29 @@ class TestLoadConfig:
 
         yaml_content = yaml.dump(config_data)
 
-        with patch("builtins.open", mock_open(read_data=yaml_content)):
-            with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
-                with pytest.raises(ValidationError):
-                    load_config("invalid_schema.yaml")
+        with patch("pathlib.Path.is_file", return_value=True):
+            with patch("builtins.open", mock_open(read_data=yaml_content)):
+                with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
+                    with pytest.raises(ValidationError):
+                        load_config("invalid_schema.yaml")
 
     def test_load_config_missing_required_fields(self):
         config_data = {"postgres": {"host": "localhost", "port": 5432}}
 
         yaml_content = yaml.dump(config_data)
 
-        with patch("builtins.open", mock_open(read_data=yaml_content)):
-            with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
-                with pytest.raises(ValidationError):
-                    load_config("missing_fields.yaml")
+        with patch("pathlib.Path.is_file", return_value=True):
+            with patch("builtins.open", mock_open(read_data=yaml_content)):
+                with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
+                    with pytest.raises(ValidationError):
+                        load_config("missing_fields.yaml")
 
     def test_load_config_empty_file(self):
-        with patch("builtins.open", mock_open(read_data="")):
-            with patch("pathlib.Path.open", mock_open(read_data="")):
-                with pytest.raises(ValidationError):
-                    load_config("empty.yaml")
+        with patch("pathlib.Path.is_file", return_value=True):
+            with patch("builtins.open", mock_open(read_data="")):
+                with patch("pathlib.Path.open", mock_open(read_data="")):
+                    with pytest.raises(ValidationError):
+                        load_config("empty.yaml")
 
     def test_load_config_null_values(self):
         config_data = {
@@ -435,10 +441,11 @@ class TestLoadConfig:
 
         yaml_content = yaml.dump(config_data)
 
-        with patch("builtins.open", mock_open(read_data=yaml_content)):
-            with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
-                with pytest.raises(ValidationError):
-                    load_config("null_values.yaml")
+        with patch("pathlib.Path.is_file", return_value=True):
+            with patch("builtins.open", mock_open(read_data=yaml_content)):
+                with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
+                    with pytest.raises(ValidationError):
+                        load_config("null_values.yaml")
 
     def test_load_config_extra_fields_ignored(self):
         config_data = {
@@ -465,14 +472,15 @@ class TestLoadConfig:
 
         yaml_content = yaml.dump(config_data)
 
-        with patch("builtins.open", mock_open(read_data=yaml_content)):
-            with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
-                config = load_config("extra_fields.yaml")
+        with patch("pathlib.Path.is_file", return_value=True):
+            with patch("builtins.open", mock_open(read_data=yaml_content)):
+                with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
+                    config = load_config("extra_fields.yaml")
 
-                assert isinstance(config, Config)
-                assert config.postgres.host == "localhost"
-                assert not hasattr(config.postgres, "extra_field")
-                assert not hasattr(config, "extra_config")
+                    assert isinstance(config, Config)
+                    assert config.postgres.host == "localhost"
+                    assert not hasattr(config.postgres, "extra_field")
+                    assert not hasattr(config, "extra_config")
 
     def test_load_config_with_echo_false(self):
         config_data = {
@@ -498,11 +506,12 @@ class TestLoadConfig:
 
         yaml_content = yaml.dump(config_data)
 
-        with patch("builtins.open", mock_open(read_data=yaml_content)):
-            with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
-                config = load_config()
+        with patch("pathlib.Path.is_file", return_value=True):
+            with patch("builtins.open", mock_open(read_data=yaml_content)):
+                with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
+                    config = load_config()
 
-                assert config.postgres.echo is False
+                    assert config.postgres.echo is False
 
     def test_load_config_without_echo_uses_default(self):
         config_data = {
@@ -527,8 +536,9 @@ class TestLoadConfig:
 
         yaml_content = yaml.dump(config_data)
 
-        with patch("builtins.open", mock_open(read_data=yaml_content)):
-            with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
-                config = load_config()
+        with patch("pathlib.Path.is_file", return_value=True):
+            with patch("builtins.open", mock_open(read_data=yaml_content)):
+                with patch("pathlib.Path.open", mock_open(read_data=yaml_content)):
+                    config = load_config()
 
-                assert config.postgres.echo is False
+                    assert config.postgres.echo is False
