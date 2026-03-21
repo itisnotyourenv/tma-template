@@ -10,10 +10,11 @@ wheels/
 .venv
 .idea
 .vscode
-config.yaml
 todos.txt
 
-config-local.yaml
+config*.yaml
+!config-example.yaml
+!config-test.yaml
 .claude/reports
 
 .coverage
