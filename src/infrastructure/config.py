@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -44,6 +45,14 @@ class Config(BaseModel):
     telegram: TelegramConfig
 
 
-def load_config(file_name: str = "config.yaml") -> Config:
-    with Path(file_name).open("r") as file:
+def load_config(file_name: str | None = None) -> Config:
+    if file_name is None:
+        file_name = os.environ.get("CONFIG_PATH", "config.yaml")
+
+    file_path = Path(file_name)
+
+    if not file_path.is_file():
+        raise FileNotFoundError(f"Config file '{file_name}' not found")
+
+    with file_path.open("r") as file:
         return Config.model_validate(yaml.safe_load(file))
