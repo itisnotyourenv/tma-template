@@ -59,11 +59,12 @@ pre-commit install
 
 Common commands:
 ```bash
-just db-up          # start local postgres
+just up             # start local services: postgres
 uv run alembic upgrade head
 just api            # run Litestar dev server on :8080
 just bot            # run Telegram bot
 just test           # start test DB, run pytest, tear down
+just test-db-up     # start test DB without running tests
 just lint           # ruff format + ruff check --fix
 just type-check     # mypy src/
 just generate-i18n  # regenerate i18n stubs

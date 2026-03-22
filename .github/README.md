@@ -74,7 +74,7 @@ Coverage threshold is 90%.
 ```shell
 docker compose up -d
 # or
-just db-up
+just up
 ```
 
 ### 5.2. Apply migrations

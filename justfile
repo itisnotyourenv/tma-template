@@ -11,23 +11,6 @@ down:
 restart:
     docker compose restart
 
-# Database only
-db-up:
-    docker compose up -d postgres
-
-db-down:
-    docker compose stop postgres
-
-db-logs:
-    docker compose logs -f postgres
-
-# Development setup
-setup:
-    docker compose up -d postgres
-    echo "PostgreSQL is starting up..."
-    echo "Database will be available at localhost:5432"
-    echo "Connection: postgresql://dev_user:dev_password@localhost:5432/template_app"
-
 # Clean up
 clean:
     docker compose down -v
@@ -41,19 +24,24 @@ logs:
 status:
     docker compose ps
 
+# Presentations
 api:
     uv run granian src.presentation.api.app:create_app --factory --port 8080 --interface asgi --log --access-log --reload
 
 bot:
     uv run python -m src.presentation.bot.main
 
+# Utils
 test:
     docker compose -f docker-compose-test.yml up -d
     uv run pytest -n auto -ss -vv --maxfail=1
     docker compose -f docker-compose-test.yml down -v
 
 test-db-up:
-    docker compose -f docker-compose-test.yml up --build -d
+    docker compose -f docker-compose-test.yml up -d
+
+test-db-down:
+    docker compose -f docker-compose-test.yml down -v
 
 lint:
     uv run ruff format src tests
