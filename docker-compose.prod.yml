@@ -3,7 +3,7 @@ name: ${APP_NAME}_prod
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: prod_postgres
+    container_name: ${APP_NAME}_prod_postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -12,15 +12,16 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 30s
+      interval: 10s
       timeout: 10s
-      retries: 3
+      retries: 5
 
   alembic:
+    container_name: ${APP_NAME}_prod_alembic
     build:
       context: .
-      dockerfile: docker/Dockerfile.bot
-    command: ["uv", "run", "alembic", "upgrade", "head"]
+      dockerfile: docker/Dockerfile
+    entrypoint: ["/app/entrypoint-alembic.sh"]
     volumes:
       - ./config-prod.yaml:/app/config.yaml:ro
     depends_on:
@@ -28,9 +29,11 @@ services:
         condition: service_healthy
 
   bot:
+    container_name: ${APP_NAME}_prod_bot
     build:
       context: .
-      dockerfile: docker/Dockerfile.bot
+      dockerfile: docker/Dockerfile
+    entrypoint: ["/app/entrypoint-bot.sh"]
     volumes:
       - ./config-prod.yaml:/app/config.yaml:ro
     depends_on:
@@ -38,11 +41,13 @@ services:
         condition: service_completed_successfully
 
   api:
+    container_name: ${APP_NAME}_prod_api
     build:
       context: .
-      dockerfile: docker/Dockerfile.api
+      dockerfile: docker/Dockerfile
+    entrypoint: ["/app/entrypoint-api.sh"]
     ports:
-      - "8000:8000"
+      - "8080:8080"
     environment:
       API_WORKERS: ${API_WORKERS}
     volumes:
@@ -50,6 +55,12 @@ services:
     depends_on:
       alembic:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   postgres_data:

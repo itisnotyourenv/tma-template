@@ -3,4 +3,10 @@ set -e
 
 echo "Starting Telegram Bot..."
 
-exec uv run python -m src.presentation.bot.main
+if python -m src.presentation.bot.main; then
+	echo "Telegram Bot exited successfully."
+else
+	status=$?
+	echo "Telegram Bot failed with exit code ${status}." >&2
+	exit "$status"
+fi
