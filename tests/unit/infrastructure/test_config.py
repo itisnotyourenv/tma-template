@@ -287,9 +287,20 @@ class TestSentryConfig:
     def test_valid_config(self):
         config = SentryConfig(dsn="https://key@sentry.io/123")
         assert config.dsn == "https://key@sentry.io/123"
-        assert config.environment == "production"
+        assert config.environment == "development"
         assert config.traces_sample_rate == 1.0
         assert config.profiles_sample_rate == 1.0
+
+    @pytest.mark.parametrize(
+        "rate",
+        [-0.1, 1.1, 2.0, -1.0],
+    )
+    def test_invalid_sample_rate(self, rate):
+        with pytest.raises(ValidationError):
+            SentryConfig(dsn="https://key@sentry.io/123", traces_sample_rate=rate)
+
+        with pytest.raises(ValidationError):
+            SentryConfig(dsn="https://key@sentry.io/123", profiles_sample_rate=rate)
 
     def test_custom_values(self):
         config = SentryConfig(

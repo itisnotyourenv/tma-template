@@ -45,9 +45,16 @@ class TelegramConfig(BaseModel):
 
 class SentryConfig(BaseModel):
     dsn: str
-    environment: str = "production"
+    environment: str = "development"  # development, production
     traces_sample_rate: float = 1.0
     profiles_sample_rate: float = 1.0
+
+    @field_validator("traces_sample_rate", "profiles_sample_rate")
+    @classmethod
+    def validate_sample_rate(cls, v: float) -> float:
+        if not 0.0 <= v <= 1.0:
+            raise ValueError("Sample rate must be between 0.0 and 1.0")
+        return v
 
 
 class Config(BaseModel):

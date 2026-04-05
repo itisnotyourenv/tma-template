@@ -52,7 +52,13 @@ class TestInitSentry:
             init_sentry(config)
             mock_init.assert_called_once_with(
                 dsn="https://key@sentry.io/123",
-                environment="production",
+                environment="development",
                 traces_sample_rate=1.0,
                 profiles_sample_rate=1.0,
             )
+
+    def test_sentry_init_failure_continues(self):
+        sentry_cfg = SentryConfig(dsn="https://key@sentry.io/123")
+        config = _make_config(sentry=sentry_cfg)
+        with patch("sentry_sdk.init", side_effect=Exception("connection failed")):
+            init_sentry(config)
