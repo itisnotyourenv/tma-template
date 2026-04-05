@@ -43,10 +43,18 @@ class TelegramConfig(BaseModel):
     tg_init_data: str = "for-auth-endpoint-tests"
 
 
+class SentryConfig(BaseModel):
+    dsn: str
+    environment: str = "production"
+    traces_sample_rate: float = 1.0
+    profiles_sample_rate: float = 1.0
+
+
 class Config(BaseModel):
     postgres: PostgresConfig
     auth: AuthConfig
     telegram: TelegramConfig
+    sentry: SentryConfig | None = None
 
 
 def load_config(file_name: str = "config.yaml") -> Config:

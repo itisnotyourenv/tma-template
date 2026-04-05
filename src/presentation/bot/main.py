@@ -18,6 +18,7 @@ from src.infrastructure.di import (
     interactor_providers,
 )
 from src.infrastructure.i18n import DEFAULT_LANGUAGE, TranslatorRunner
+from src.infrastructure.sentry import init_sentry
 from src.presentation.bot.middleware.user_and_locale import UserAndLocaleMiddleware
 from src.presentation.bot.routers import setup_routers
 
@@ -36,6 +37,8 @@ async def notify_admins_on_startup(
 
 async def main() -> None:
     config = load_config()
+    init_sentry(config)
+
     bot = Bot(
         token=config.telegram.bot_token,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),

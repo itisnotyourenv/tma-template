@@ -13,6 +13,7 @@ from src.infrastructure.config import Config, load_config
 from src.infrastructure.di import interactor_providers
 from src.infrastructure.di.auth import AuthProvider
 from src.infrastructure.di.db import DBProvider
+from src.infrastructure.sentry import init_sentry
 
 from .exception import (
     custom_exception_handler,
@@ -53,6 +54,7 @@ def prepare_app(auth_service: AuthService) -> Litestar:
 
 def create_app() -> Litestar:
     config = load_config()
+    init_sentry(config)
 
     auth_service: AuthService = AuthServiceImpl(config)
     app = prepare_app(auth_service)
