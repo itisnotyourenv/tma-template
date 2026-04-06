@@ -43,10 +43,25 @@ class TelegramConfig(BaseModel):
     tg_init_data: str = "for-auth-endpoint-tests"
 
 
+class SentryConfig(BaseModel):
+    dsn: str
+    environment: str = "development"  # development, production
+    traces_sample_rate: float = 1.0
+    profiles_sample_rate: float = 1.0
+
+    @field_validator("traces_sample_rate", "profiles_sample_rate")
+    @classmethod
+    def validate_sample_rate(cls, v: float) -> float:
+        if not 0.0 <= v <= 1.0:
+            raise ValueError("Sample rate must be between 0.0 and 1.0")
+        return v
+
+
 class Config(BaseModel):
     postgres: PostgresConfig
     auth: AuthConfig
     telegram: TelegramConfig
+    sentry: SentryConfig | None = None
 
 
 def load_config(file_name: str = "config.yaml") -> Config:

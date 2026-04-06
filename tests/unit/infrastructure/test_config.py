@@ -10,6 +10,7 @@ from src.infrastructure.config import (
     AuthConfig,
     Config,
     PostgresConfig,
+    SentryConfig,
     TelegramConfig,
     load_config,
 )
@@ -282,6 +283,41 @@ class TestTelegramConfig:
         assert config.bot_token == expected
 
 
+class TestSentryConfig:
+    def test_valid_config(self):
+        config = SentryConfig(dsn="https://key@sentry.io/123")
+        assert config.dsn == "https://key@sentry.io/123"
+        assert config.environment == "development"
+        assert config.traces_sample_rate == 1.0
+        assert config.profiles_sample_rate == 1.0
+
+    @pytest.mark.parametrize(
+        "rate",
+        [-0.1, 1.1, 2.0, -1.0],
+    )
+    def test_invalid_sample_rate(self, rate):
+        with pytest.raises(ValidationError):
+            SentryConfig(dsn="https://key@sentry.io/123", traces_sample_rate=rate)
+
+        with pytest.raises(ValidationError):
+            SentryConfig(dsn="https://key@sentry.io/123", profiles_sample_rate=rate)
+
+    def test_custom_values(self):
+        config = SentryConfig(
+            dsn="https://key@sentry.io/123",
+            environment="staging",
+            traces_sample_rate=0.5,
+            profiles_sample_rate=0.25,
+        )
+        assert config.environment == "staging"
+        assert config.traces_sample_rate == 0.5
+        assert config.profiles_sample_rate == 0.25
+
+    def test_dsn_required(self):
+        with pytest.raises(ValidationError):
+            SentryConfig()
+
+
 class TestConfig:
     def test_valid_config(self):
         postgres_config = PostgresConfig(
@@ -304,6 +340,32 @@ class TestConfig:
         assert config.postgres == postgres_config
         assert config.auth == auth_config
         assert config.telegram == telegram_config
+
+    def test_config_without_sentry(self):
+        config = Config(
+            postgres=PostgresConfig(
+                host="localhost", port=5432, user="u", password="p", db="d"
+            ),
+            auth=AuthConfig(
+                secret_key="s", algorithm="HS256", access_token_expire_minutes=30
+            ),
+            telegram=TelegramConfig(bot_token="t", admin_ids=[1], bot_username="b"),
+        )
+        assert config.sentry is None
+
+    def test_config_with_sentry(self):
+        config = Config(
+            postgres=PostgresConfig(
+                host="localhost", port=5432, user="u", password="p", db="d"
+            ),
+            auth=AuthConfig(
+                secret_key="s", algorithm="HS256", access_token_expire_minutes=30
+            ),
+            telegram=TelegramConfig(bot_token="t", admin_ids=[1], bot_username="b"),
+            sentry=SentryConfig(dsn="https://key@sentry.io/123"),
+        )
+        assert config.sentry is not None
+        assert config.sentry.dsn == "https://key@sentry.io/123"
 
     @pytest.mark.parametrize(
         "postgres,should_raise",

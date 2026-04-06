@@ -23,3 +23,9 @@ auth:
 
 log:
   level: "INFO"
+
+# sentry:
+#   dsn: "https://examplePublicKey@o0.ingest.sentry.io/0"
+#   environment: "development"
+#   traces_sample_rate: 1.0
+#   profiles_sample_rate: 1.0
