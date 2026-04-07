@@ -5,12 +5,12 @@ telegram:
   # Mode: "polling" (default) or "webhook"
   # mode: "polling"
   # webhook:
-  #   url: "https://your.domain/tg"     # Public HTTPS URL Telegram POSTs to
-  #   path: "/tg"                       # Local URL path the aiohttp server listens on
+  #   url: "https://your.domain/tg"     # Public HTTPS URL Telegram POSTs to (must be https://)
+  #   path: "/tg"                       # Local URL path the aiohttp server listens on (must start with '/')
   #   host: "0.0.0.0"
   #   port: 8081
-  #   secret_token: "optional-random-string"
-  #   drop_pending_updates: true
+  #   secret_token: "optional-random-string"   # Must match [A-Za-z0-9_-]{1,256}
+  #   drop_pending_updates: false              # Set true to discard updates queued while the bot was offline
 
 postgres:
   host: "localhost"

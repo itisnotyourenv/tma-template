@@ -1,8 +1,11 @@
+import re
 from pathlib import Path
 from typing import Literal
 
 import yaml
 from pydantic import BaseModel, field_validator, model_validator
+
+_WEBHOOK_SECRET_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,256}$")
 
 
 class PostgresConfig(BaseModel):
@@ -43,13 +46,36 @@ class WebhookConfig(BaseModel):
     host: str = "0.0.0.0"  # noqa: S104
     port: int = 8081
     secret_token: str | None = None
-    drop_pending_updates: bool = True
+    drop_pending_updates: bool = False
+
+    @field_validator("url")
+    @classmethod
+    def url_validator(cls, v: str) -> str:
+        if not v.startswith("https://"):
+            raise ValueError("Webhook URL must use https:// (required by Telegram)")
+        return v
+
+    @field_validator("path")
+    @classmethod
+    def path_validator(cls, v: str) -> str:
+        if not v.startswith("/"):
+            raise ValueError("Webhook path must start with '/'")
+        return v
 
     @field_validator("port")
     @classmethod
     def port_validator(cls, v: int) -> int:
         if not 1 <= v <= 65535:
             raise ValueError("Port must be between 1 and 65535")
+        return v
+
+    @field_validator("secret_token")
+    @classmethod
+    def secret_token_validator(cls, v: str | None) -> str | None:
+        if v is not None and not _WEBHOOK_SECRET_TOKEN_PATTERN.match(v):
+            raise ValueError(
+                "secret_token must match [A-Za-z0-9_-]{1,256} (Telegram requirement)"
+            )
         return v
 
 

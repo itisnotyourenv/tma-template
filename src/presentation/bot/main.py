@@ -107,7 +107,13 @@ async def main() -> None:
         await notify_admins_on_startup(bot, config, hub)
 
     if config.telegram.mode == "webhook":
-        assert config.telegram.webhook is not None  # guaranteed by config validator
+        if config.telegram.webhook is None:
+            # Defensive: the config validator already enforces this invariant,
+            # so this branch should be unreachable. We keep the explicit check
+            # because `assert` is stripped under `python -O`.
+            raise RuntimeError(
+                "telegram.webhook must be set when telegram.mode is 'webhook'"
+            )
         await _run_webhook(bot, dp, config.telegram.webhook)
     else:
         await dp.start_polling(bot)
