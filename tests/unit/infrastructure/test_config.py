@@ -12,6 +12,7 @@ from src.infrastructure.config import (
     PostgresConfig,
     SentryConfig,
     TelegramConfig,
+    WebhookConfig,
     load_config,
 )
 
@@ -281,6 +282,98 @@ class TestTelegramConfig:
             bot_token=bot_token, admin_ids=[123456789], bot_username="test_bot"
         )
         assert config.bot_token == expected
+
+    def test_defaults_to_polling_mode(self):
+        config = TelegramConfig(bot_token="token", admin_ids=[1], bot_username="my_bot")
+
+        assert config.mode == "polling"
+        assert config.webhook is None
+
+    def test_webhook_mode_requires_webhook_block(self):
+        with pytest.raises(ValidationError, match="telegram.webhook"):
+            TelegramConfig(
+                bot_token="token",
+                admin_ids=[1],
+                bot_username="my_bot",
+                mode="webhook",
+            )
+
+    def test_webhook_mode_accepts_valid_webhook(self):
+        config = TelegramConfig(
+            bot_token="token",
+            admin_ids=[1],
+            bot_username="my_bot",
+            mode="webhook",
+            webhook=WebhookConfig(url="https://example.com/tg"),
+        )
+
+        assert config.mode == "webhook"
+        assert config.webhook is not None
+        assert config.webhook.url == "https://example.com/tg"
+
+    def test_polling_mode_with_webhook_block_is_allowed(self):
+        # Users may keep the webhook block around while temporarily running polling.
+        config = TelegramConfig(
+            bot_token="token",
+            admin_ids=[1],
+            bot_username="my_bot",
+            mode="polling",
+            webhook=WebhookConfig(url="https://example.com/tg"),
+        )
+
+        assert config.mode == "polling"
+        assert config.webhook is not None
+
+    def test_invalid_mode_value(self):
+        with pytest.raises(ValidationError):
+            TelegramConfig(
+                bot_token="token",
+                admin_ids=[1],
+                bot_username="my_bot",
+                mode="bogus",
+            )
+
+
+class TestWebhookConfig:
+    def test_defaults(self):
+        config = WebhookConfig(url="https://example.com/tg")
+
+        assert config.url == "https://example.com/tg"
+        assert config.path == "/webhook"
+        assert config.host == "0.0.0.0"  # noqa: S104
+        assert config.port == 8081
+        assert config.secret_token is None
+        assert config.drop_pending_updates is True
+
+    def test_custom_values(self):
+        config = WebhookConfig(
+            url="https://example.com/tg",
+            path="/tg",
+            host="127.0.0.1",
+            port=9000,
+            secret_token="s3cret",
+            drop_pending_updates=False,
+        )
+
+        assert config.path == "/tg"
+        assert config.host == "127.0.0.1"
+        assert config.port == 9000
+        assert config.secret_token == "s3cret"
+        assert config.drop_pending_updates is False
+
+    def test_url_required(self):
+        with pytest.raises(ValidationError):
+            WebhookConfig()
+
+    @pytest.mark.parametrize("port", [0, -1, 65536, 70000])
+    def test_port_out_of_range(self, port):
+        with pytest.raises(ValidationError, match="Port"):
+            WebhookConfig(url="https://example.com/tg", port=port)
+
+    @pytest.mark.parametrize("port", [1, 80, 8081, 65535])
+    def test_port_in_range(self, port):
+        config = WebhookConfig(url="https://example.com/tg", port=port)
+        assert config.port == port
 
 
 class TestSentryConfig:

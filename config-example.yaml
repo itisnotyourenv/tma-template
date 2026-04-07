@@ -2,6 +2,15 @@ telegram:
   bot_token: "token"
   admin_ids: [1,2,3,4]
   bot_username: "your_bot_username"
+  # Mode: "polling" (default) or "webhook"
+  # mode: "polling"
+  # webhook:
+  #   url: "https://your.domain/tg"     # Public HTTPS URL Telegram POSTs to
+  #   path: "/tg"                       # Local URL path the aiohttp server listens on
+  #   host: "0.0.0.0"
+  #   port: 8081
+  #   secret_token: "optional-random-string"
+  #   drop_pending_updates: true
 
 postgres:
   host: "localhost"

@@ -1,7 +1,8 @@
 from pathlib import Path
+from typing import Literal
 
 import yaml
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 
 class PostgresConfig(BaseModel):
@@ -36,11 +37,37 @@ class AuthConfig(BaseModel):
     access_token_expire_minutes: int
 
 
+class WebhookConfig(BaseModel):
+    url: str
+    path: str = "/webhook"
+    host: str = "0.0.0.0"  # noqa: S104
+    port: int = 8081
+    secret_token: str | None = None
+    drop_pending_updates: bool = True
+
+    @field_validator("port")
+    @classmethod
+    def port_validator(cls, v: int) -> int:
+        if not 1 <= v <= 65535:
+            raise ValueError("Port must be between 1 and 65535")
+        return v
+
+
 class TelegramConfig(BaseModel):
     bot_token: str
     admin_ids: list[int]
     bot_username: str
     tg_init_data: str = "for-auth-endpoint-tests"
+    mode: Literal["polling", "webhook"] = "polling"
+    webhook: WebhookConfig | None = None
+
+    @model_validator(mode="after")
+    def _webhook_required_in_webhook_mode(self) -> "TelegramConfig":
+        if self.mode == "webhook" and self.webhook is None:
+            raise ValueError(
+                "telegram.webhook config must be set when telegram.mode is 'webhook'"
+            )
+        return self
 
 
 class SentryConfig(BaseModel):
