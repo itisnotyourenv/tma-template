@@ -49,10 +49,6 @@ async def setup_dispatcher(config: Config) -> tuple[Dispatcher, Bot]:
         session=NoOpSession(),
     )
 
-    interactor_provider_instances = [
-        interactor() for interactor in interactor_providers
-    ]
-
     dp = Dispatcher(config=config)
     main_router = setup_routers()
     dp.include_router(main_router)
@@ -61,7 +57,7 @@ async def setup_dispatcher(config: Config) -> tuple[Dispatcher, Bot]:
         AuthProvider(),
         DBProvider(),
         I18nProvider(),
-        *interactor_provider_instances,
+        *interactor_providers,
         context={Config: config},
     )
     setup_dishka(container=container, router=dp)
