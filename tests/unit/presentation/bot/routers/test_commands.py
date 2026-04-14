@@ -43,7 +43,9 @@ class TestCommandStartHandler:
         """Create a mock Dishka container that resolves dependencies."""
         container = MagicMock()
 
-        async def mock_get(dep_type: type, **kwargs: object) -> object:
+        async def mock_get(
+            dep_type: type, component: object = None, **kwargs: object
+        ) -> object:
             if dep_type is ProcessReferralInteractor:
                 return process_referral
             raise ValueError(f"Unknown dependency: {dep_type}")
