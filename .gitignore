@@ -25,3 +25,7 @@ src/presentation/load_test/reports/
 
 # Git worktrees
 .worktrees/
+
+# claude code extensions
+*.omc
+docs
