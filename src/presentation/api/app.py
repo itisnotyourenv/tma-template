@@ -10,9 +10,7 @@ from src.application.common.exceptions import ValidationError
 from src.application.interfaces.auth import AuthService
 from src.infrastructure.auth import AuthServiceImpl
 from src.infrastructure.config import Config, load_config
-from src.infrastructure.di import interactor_providers
-from src.infrastructure.di.auth import AuthProvider
-from src.infrastructure.di.db import DBProvider
+from src.infrastructure.di import infra_providers, interactor_providers
 from src.infrastructure.sentry import init_sentry
 
 from .exception import (
@@ -59,14 +57,9 @@ def create_app() -> Litestar:
     auth_service: AuthService = AuthServiceImpl(config)
     app = prepare_app(auth_service)
 
-    interactor_provider_instances = [
-        interactor() for interactor in interactor_providers
-    ]
-
     container = make_async_container(
-        AuthProvider(),
-        DBProvider(),
-        *interactor_provider_instances,
+        *infra_providers,
+        *interactor_providers,
         context={Config: config, AuthService: auth_service},
     )
 

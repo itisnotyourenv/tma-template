@@ -157,14 +157,10 @@ async def dishka_container_for_tests(
     )
     worker_config = test_config.model_copy(update={"postgres": worker_postgres_config})
 
-    interactor_provider_instances = [
-        interactor() for interactor in interactor_providers
-    ]
-
     container = make_async_container(
         AuthProvider(),
         DBProvider(worker_postgres_config),
-        *interactor_provider_instances,
+        *interactor_providers,
         context={Config: worker_config, AuthService: test_auth_service},
     )
     yield container

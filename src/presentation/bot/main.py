@@ -11,12 +11,7 @@ from dishka.integrations.aiogram import setup_dishka
 from fluentogram import TranslatorHub
 
 from src.infrastructure.config import Config, load_config
-from src.infrastructure.di import (
-    AuthProvider,
-    DBProvider,
-    I18nProvider,
-    interactor_providers,
-)
+from src.infrastructure.di import infra_providers, interactor_providers
 from src.infrastructure.i18n import DEFAULT_LANGUAGE, TranslatorRunner
 from src.infrastructure.sentry import init_sentry
 from src.presentation.bot.middleware.user_and_locale import UserAndLocaleMiddleware
@@ -44,19 +39,13 @@ async def main() -> None:
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
-    interactor_provider_instances = [
-        interactor() for interactor in interactor_providers
-    ]
-
     dp = Dispatcher(config=config)
     main_router = setup_routers()
     dp.include_router(main_router)
 
     container = make_async_container(
-        AuthProvider(),
-        DBProvider(),
-        I18nProvider(),
-        *interactor_provider_instances,
+        *infra_providers,
+        *interactor_providers,
         context={Config: config},
     )
     setup_dishka(container=container, router=dp)
