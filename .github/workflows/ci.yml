@@ -49,9 +49,9 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_PASSWORD: dev_password
-          POSTGRES_USER: dev_user
-          POSTGRES_DB: ask_app
+          POSTGRES_PASSWORD: test_dev_password
+          POSTGRES_USER: test_dev_user
+          POSTGRES_DB: test_dev_db
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
