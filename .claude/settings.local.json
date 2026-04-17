@@ -9,6 +9,7 @@
       "Bash(git stash *)",
       "Bash(git fetch *)",
       "Bash(git pull *)",
+      "Bash(git checkout -b *)",
 
       "Bash(gh issue *)",
       "Bash(gh pr *)",

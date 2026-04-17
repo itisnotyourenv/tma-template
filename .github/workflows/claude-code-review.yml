@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: write
       issues: read
       id-token: write
     
@@ -37,18 +37,73 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
-            Please review this pull request and provide feedback on:
-            - Code quality and best practices
-            - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
-            - Test coverage
-            
-            Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
+            Perform a thorough code review for this PR. PR context (title, body, diff, changed files)
+            is already available to you — do not fetch it again. Follow CLAUDE.md for style/conventions.
 
-            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
-          
+            ## Review focus
+            1. **Bugs & edge cases** — logic errors, unhandled exceptions, race conditions, off-by-one
+            2. **Security** — injection, auth bypass, sensitive data exposure, insecure dependencies
+            3. **Performance** — N+1 queries, blocking I/O, unnecessary re-computation, memory leaks
+            4. **Code quality** — naming, duplication, complexity, consistency with existing patterns
+            5. **Tests** — coverage of new logic, missing edge cases, weak assertions
+            6. **Breaking changes** — API contracts, DB migrations, backward compatibility
+            7. **Documentation** — docstrings, README, changelog if needed
+
+            ## Inline comment format
+            Each comment targets a specific line in the **new** file version with:
+            - `path` — repo-relative path
+            - `line` — line number on the RIGHT side of the diff
+            - `side` — `"RIGHT"`
+            - `body` — starts with a severity tag, then a brief explanation and (when useful) a concrete fix in a fenced code block:
+              - 🔴 `[CRITICAL]` — must be fixed before merge
+              - 🟡 `[SUGGESTION]` — improvement, not blocking
+              - 🔵 `[QUESTION]` — needs clarification from author
+
+            ## Submitting the review
+            Post **one** review (never a standalone PR comment, never multiple reviews) with all inline
+            comments plus a summary body. Use this exact call:
+
+            ```bash
+            gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
+              --method POST \
+              --input - <<'EOF'
+            {
+              "commit_id": "${{ github.event.pull_request.head.sha }}",
+              "body": "<summary, see below>",
+              "event": "<REQUEST_CHANGES | APPROVE | COMMENT>",
+              "comments": [
+                { "path": "relative/path.py", "line": 42, "side": "RIGHT", "body": "🔴 [CRITICAL] ..." }
+              ]
+            }
+            EOF
+            ```
+
+            **Event rule:**
+            - `REQUEST_CHANGES` — at least one 🔴 CRITICAL issue
+            - `APPROVE` — nothing found worth commenting on
+            - `COMMENT` — only 🟡 suggestions or 🔵 questions
+
+            ## Summary body structure
+            ```
+            ## 📋 PR Review — {PR title}
+
+            ### 🔴 Critical Issues ({N})
+            - `path/to/file.py:42` — short description
+
+            ### 🟡 Suggestions ({N})
+            - `path/to/file.py:17` — short description
+
+            ### 🔵 Questions ({N})
+            - Question for the author
+
+            ### ✅ What's done well
+            - Positive observations
+
+            ---
+            ### Verdict: REQUEST_CHANGES | APPROVE | NEEDS DISCUSSION
+            > One-sentence overall assessment.
+            ```
+
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.anthropic.com/en/docs/claude-code/sdk#command-line for available options
-          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
-
+          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh api:*)"'
