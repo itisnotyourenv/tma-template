@@ -11,7 +11,7 @@ from src.infrastructure.config import Config
 from src.infrastructure.i18n import DEFAULT_LANGUAGE, TranslatorRunner
 
 
-async def _run_webhook(bot: Bot, dp: Dispatcher, config: Config) -> None:
+async def run_webhook(bot: Bot, dp: Dispatcher, config: Config) -> None:
     """Start an aiohttp server that receives Telegram updates via webhook."""
     webhook_config = config.telegram.webhook
 

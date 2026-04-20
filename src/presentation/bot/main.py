@@ -19,7 +19,7 @@ from src.infrastructure.di import (
 from src.infrastructure.sentry import init_sentry
 from src.presentation.bot.middleware.user_and_locale import UserAndLocaleMiddleware
 from src.presentation.bot.routers import setup_routers
-from src.presentation.bot.utils.helpers import _run_webhook, notify_admins_on_startup
+from src.presentation.bot.utils.helpers import notify_admins_on_startup, run_webhook
 
 
 async def main() -> None:
@@ -66,7 +66,7 @@ async def main() -> None:
             raise RuntimeError(
                 "telegram.webhook must be set when telegram.mode is 'webhook'"
             )
-        await _run_webhook(bot, dp, config)
+        await run_webhook(bot, dp, config)
     else:
         await dp.start_polling(bot)
 
