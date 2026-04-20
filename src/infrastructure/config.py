@@ -1,11 +1,9 @@
 import re
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 
 import yaml
 from pydantic import BaseModel, field_validator, model_validator
-
-_WEBHOOK_SECRET_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,256}$")
 
 
 class PostgresConfig(BaseModel):
@@ -41,6 +39,10 @@ class AuthConfig(BaseModel):
 
 
 class WebhookConfig(BaseModel):
+    _SECRET_TOKEN_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+        r"^[A-Za-z0-9_-]{1,256}$"
+    )
+
     url: str
     path: str = "/webhook"
     host: str = "0.0.0.0"  # noqa: S104
@@ -72,7 +74,7 @@ class WebhookConfig(BaseModel):
     @field_validator("secret_token")
     @classmethod
     def secret_token_validator(cls, v: str | None) -> str | None:
-        if v is not None and not _WEBHOOK_SECRET_TOKEN_PATTERN.match(v):
+        if v is not None and not cls._SECRET_TOKEN_PATTERN.match(v):
             raise ValueError(
                 "secret_token must match [A-Za-z0-9_-]{1,256} (Telegram requirement)"
             )
