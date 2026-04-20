@@ -339,7 +339,7 @@ class TestWebhookConfig:
         config = WebhookConfig(url="https://example.com/tg")
 
         assert config.url == "https://example.com/tg"
-        assert config.path == "/webhook"
+        assert config.path == "/tg"
         assert config.host == "0.0.0.0"  # noqa: S104
         assert config.port == 8081
         assert config.secret_token is None
@@ -348,7 +348,6 @@ class TestWebhookConfig:
     def test_custom_values(self):
         config = WebhookConfig(
             url="https://example.com/tg",
-            path="/tg",
             host="127.0.0.1",
             port=9000,
             secret_token="s3cret",
@@ -379,20 +378,22 @@ class TestWebhookConfig:
             WebhookConfig(url=url)
 
     @pytest.mark.parametrize(
-        "path",
-        ["webhook", "tg", ""],
+        "url,expected_path",
+        [
+            ("https://example.com/tg", "/tg"),
+            ("https://example.com/webhook", "/webhook"),
+            ("https://example.com/tg/updates", "/tg/updates"),
+            ("https://example.com/", "/"),
+            ("https://example.com", "/"),
+        ],
     )
-    def test_path_must_start_with_slash(self, path):
-        with pytest.raises(ValidationError, match="start with '/'"):
-            WebhookConfig(url="https://example.com/tg", path=path)
+    def test_path_derived_from_url(self, url, expected_path):
+        config = WebhookConfig(url=url)
+        assert config.path == expected_path
 
-    @pytest.mark.parametrize(
-        "path",
-        ["/", "/webhook", "/tg/updates"],
-    )
-    def test_path_valid(self, path):
-        config = WebhookConfig(url="https://example.com/tg", path=path)
-        assert config.path == path
+    def test_url_must_include_host(self):
+        with pytest.raises(ValidationError, match="host"):
+            WebhookConfig(url="https:///tg")
 
     @pytest.mark.parametrize(
         "token",

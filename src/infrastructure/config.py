@@ -1,6 +1,7 @@
 import re
 from pathlib import Path
 from typing import ClassVar, Literal
+from urllib.parse import urlparse
 
 import yaml
 from pydantic import BaseModel, field_validator, model_validator
@@ -44,7 +45,6 @@ class WebhookConfig(BaseModel):
     )
 
     url: str
-    path: str = "/webhook"
     host: str = "0.0.0.0"  # noqa: S104
     port: int = 8081
     secret_token: str | None = None
@@ -55,14 +55,16 @@ class WebhookConfig(BaseModel):
     def url_validator(cls, v: str) -> str:
         if not v.startswith("https://"):
             raise ValueError("Webhook URL must use https:// (required by Telegram)")
+        if not urlparse(v).netloc:
+            raise ValueError("Webhook URL must include a host")
         return v
 
-    @field_validator("path")
-    @classmethod
-    def path_validator(cls, v: str) -> str:
-        if not v.startswith("/"):
-            raise ValueError("Webhook path must start with '/'")
-        return v
+    @property
+    def path(self) -> str:
+        # Telegram POSTs to `url`, so the aiohttp server must listen on the
+        # same path. Deriving it here keeps the two in lock-step — a bare
+        # `https://host` URL registers as `/`, which is what Telegram uses.
+        return urlparse(self.url).path or "/"
 
     @field_validator("port")
     @classmethod
