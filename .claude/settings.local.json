@@ -1,24 +1,37 @@
 {
   "permissions": {
+    "defaultMode": "acceptEdits",
     "allow": [
-      "Bash(ruff check:*)",
-      "Bash(ruff format:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(pytest:*)",
-      "Bash(gh issue create:*)",
-      "Bash(gh issue:*)",
-      "Bash(time python:*)",
-      "Bash(python test_jwt_validation.py:*)",
-      "Bash(gh pr view:*)",
-      "Bash(find:*)",
-      "Bash(gh pr comment:*)",
-      "Bash(python -m pytest tests/infrastructure/test_auth.py::TestAuthServiceImpl::test_extract_user_from_token_success -v)",
-      "Bash(gh api:*)",
-      "Bash(ls:*)",
-      "Bash(ruff:*)"
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git stash *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(git checkout -b *)",
+
+      "Bash(gh issue *)",
+      "Bash(gh pr *)",
+      "Bash(gh run *)",
+
+      "Bash(pytest *)",
+      "Bash(ruff check *)",
+      "Bash(ruff format *)",
+
+      "Bash(just lint)",
+
+      "Bash(docker compose up *)"
     ],
-    "deny": []
+    "deny": [
+      "Bash(git checkout main *)",
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Read(.env*)",
+      "Write(*lock*)"
+    ],
+    "ask": [
+      "Bash(git push *)"
+    ]
   }
 }
