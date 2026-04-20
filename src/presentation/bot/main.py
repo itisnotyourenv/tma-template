@@ -11,13 +11,9 @@ from fluentogram import TranslatorHub
 
 from src.infrastructure.config import Config, load_config
 from src.infrastructure.di import (
-    AuthProvider,
-    DBProvider,
-    I18nProvider,
+    infra_providers,
     interactor_providers,
 )
-from src.infrastructure.di import infra_providers, interactor_providers
-from src.infrastructure.i18n import DEFAULT_LANGUAGE, TranslatorRunner
 from src.infrastructure.sentry import init_sentry
 from src.presentation.bot.middleware.user_and_locale import UserAndLocaleMiddleware
 from src.presentation.bot.routers import setup_routers
