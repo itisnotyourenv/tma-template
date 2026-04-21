@@ -2,6 +2,14 @@ telegram:
   bot_token: "token"
   admin_ids: [1,2,3,4]
   bot_username: "your_bot_username"
+  # Mode: "polling" (default) or "webhook"
+  # mode: "polling"
+  # webhook:
+  #   url: "https://your.domain/tg"     # Public HTTPS URL Telegram POSTs to (https://); the path component is reused as the local listen path
+  #   host: "0.0.0.0"
+  #   port: 8081
+  #   secret_token: "optional-random-string"   # Must match [A-Za-z0-9_-]{1,256}
+  #   drop_pending_updates: false              # Set true to discard updates queued while the bot was offline
 
 postgres:
   host: "localhost"

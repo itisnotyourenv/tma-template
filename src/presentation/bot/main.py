@@ -5,29 +5,19 @@ import sys
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.exceptions import TelegramAPIError
 from dishka import make_async_container
 from dishka.integrations.aiogram import setup_dishka
 from fluentogram import TranslatorHub
 
 from src.infrastructure.config import Config, load_config
-from src.infrastructure.di import infra_providers, interactor_providers
-from src.infrastructure.i18n import DEFAULT_LANGUAGE, TranslatorRunner
+from src.infrastructure.di import (
+    infra_providers,
+    interactor_providers,
+)
 from src.infrastructure.sentry import init_sentry
 from src.presentation.bot.middleware.user_and_locale import UserAndLocaleMiddleware
 from src.presentation.bot.routers import setup_routers
-
-
-async def notify_admins_on_startup(
-    bot: Bot, config: Config, hub: TranslatorHub
-) -> None:
-    """Send notification to admins when bot starts up."""
-    i18n: TranslatorRunner = hub.get_translator_by_locale(DEFAULT_LANGUAGE)
-    for admin_id in config.telegram.admin_ids:
-        try:
-            await bot.send_message(chat_id=admin_id, text=i18n.bot_started())
-        except TelegramAPIError as e:
-            logging.warning("Failed to notify admin %s: %s", admin_id, e)
+from src.presentation.bot.utils.helpers import notify_admins_on_startup, run_webhook
 
 
 async def main() -> None:
@@ -60,7 +50,17 @@ async def main() -> None:
 
         await notify_admins_on_startup(bot, config, hub)
 
-    await dp.start_polling(bot)
+    if config.telegram.mode == "webhook":
+        if config.telegram.webhook is None:
+            # Defensive: the config validator already enforces this invariant,
+            # so this branch should be unreachable. We keep the explicit check
+            # because `assert` is stripped under `python -O`.
+            raise RuntimeError(
+                "telegram.webhook must be set when telegram.mode is 'webhook'"
+            )
+        await run_webhook(bot, dp, config)
+    else:
+        await dp.start_polling(bot)
 
 
 if __name__ == "__main__":

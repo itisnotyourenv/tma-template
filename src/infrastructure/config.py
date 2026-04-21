@@ -1,7 +1,10 @@
+import re
 from pathlib import Path
+from typing import ClassVar, Literal
+from urllib.parse import urlparse
 
 import yaml
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 
 class PostgresConfig(BaseModel):
@@ -36,11 +39,65 @@ class AuthConfig(BaseModel):
     access_token_expire_minutes: int
 
 
+class WebhookConfig(BaseModel):
+    _SECRET_TOKEN_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+        r"^[A-Za-z0-9_-]{1,256}$"
+    )
+
+    url: str
+    host: str = "0.0.0.0"  # noqa: S104
+    port: int = 8081
+    secret_token: str | None = None
+    drop_pending_updates: bool = False
+
+    @field_validator("url")
+    @classmethod
+    def url_validator(cls, v: str) -> str:
+        if not v.startswith("https://"):
+            raise ValueError("Webhook URL must use https:// (required by Telegram)")
+        if not urlparse(v).netloc:
+            raise ValueError("Webhook URL must include a host")
+        return v
+
+    @property
+    def path(self) -> str:
+        # Telegram POSTs to `url`, so the aiohttp server must listen on the
+        # same path. Deriving it here keeps the two in lock-step — a bare
+        # `https://host` URL registers as `/`, which is what Telegram uses.
+        return urlparse(self.url).path or "/"
+
+    @field_validator("port")
+    @classmethod
+    def port_validator(cls, v: int) -> int:
+        if not 1 <= v <= 65535:
+            raise ValueError("Port must be between 1 and 65535")
+        return v
+
+    @field_validator("secret_token")
+    @classmethod
+    def secret_token_validator(cls, v: str | None) -> str | None:
+        if v is not None and not cls._SECRET_TOKEN_PATTERN.match(v):
+            raise ValueError(
+                "secret_token must match [A-Za-z0-9_-]{1,256} (Telegram requirement)"
+            )
+        return v
+
+
 class TelegramConfig(BaseModel):
     bot_token: str
     admin_ids: list[int]
     bot_username: str
     tg_init_data: str = "for-auth-endpoint-tests"
+    mode: Literal["polling", "webhook"] = "polling"
+    webhook: WebhookConfig | None = None
+
+    @model_validator(mode="after")
+    def _webhook_required_in_webhook_mode(self) -> "TelegramConfig":
+        if self.mode == "webhook" and self.webhook is None:
+            raise ValueError(
+                "telegram.webhook config must be set when telegram.mode is 'webhook'"
+            )
+        return self
 
 
 class SentryConfig(BaseModel):
