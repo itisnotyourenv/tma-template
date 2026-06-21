@@ -69,3 +69,7 @@ lint:
 generate-i18n:
     uv run python scripts/generate_i18n_stubs.py
     uv run ruff format src/infrastructure/i18n/types.py
+
+# Export the API OpenAPI schema to a JSON file (default: openapi.json)
+export-openapi output="openapi.json":
+    LITESTAR_APP=src.presentation.api.app:create_app uv run litestar schema openapi --output {{output}}
