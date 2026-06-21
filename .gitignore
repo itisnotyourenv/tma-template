@@ -23,6 +23,9 @@ coverage.xml
 # Load test reports
 src/presentation/load_test/reports/
 
+# Generated OpenAPI schema (run `just export-openapi`)
+openapi.json
+
 # Git worktrees
 .worktrees/
 
