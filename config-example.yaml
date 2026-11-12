@@ -25,7 +25,8 @@ postgres:
   # echo_pool: false
 
 auth:
-  secret_key: "secret"
+  # HS256 needs >= 32 bytes: python -c "import secrets; print(secrets.token_urlsafe(32))"
+  secret_key: "change-me"
   algorithm: "HS256"
   access_token_expire_minutes: 30
 

@@ -290,7 +290,7 @@ class TestTelegramConfig:
         assert config.webhook is None
 
     def test_webhook_mode_requires_webhook_block(self):
-        with pytest.raises(ValidationError, match="telegram.webhook"):
+        with pytest.raises(ValidationError, match=r"telegram\.webhook"):
             TelegramConfig(
                 bot_token="token",
                 admin_ids=[1],
