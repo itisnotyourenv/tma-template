@@ -1,8 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 from aiogram.utils.web_app import safe_parse_webapp_init_data
-from jose import ExpiredSignatureError, JWTError
-from jose.jwt import decode, encode
+from jwt import ExpiredSignatureError, InvalidTokenError, decode, encode
 
 from src.application.auth.exceptions import InvalidInitDataError
 from src.application.common.exceptions import ValidationError
@@ -67,7 +66,7 @@ class AuthServiceImpl(AuthService):
             return int(user_id_str)
         except ExpiredSignatureError as err:
             raise ValidationError("Token has expired") from err
-        except JWTError as err:
+        except InvalidTokenError as err:
             raise ValidationError("Invalid token") from err
         except (ValueError, TypeError) as err:
             raise ValidationError("Invalid user ID in token") from err

@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
 import pytest
-from jose.jwt import decode, encode, get_unverified_header
+from jwt import decode, encode, get_unverified_header
 
 from src.application.auth.exceptions import InvalidInitDataError
 from src.application.common.exceptions import ValidationError

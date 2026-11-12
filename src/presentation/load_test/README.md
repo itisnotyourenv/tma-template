@@ -212,8 +212,7 @@ Use the following helper functions from `factories.py`:
 Your factory function must match this signature:
 
 ```python
-def handler_function(update_id: int, user_id: int) -> Update:
-    ...
+def handler_function(update_id: int, user_id: int) -> Update: ...
 ```
 
 - `update_id`: Unique sequential update ID (starts at 1)

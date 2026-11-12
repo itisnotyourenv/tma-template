@@ -6,39 +6,39 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.13"
 dependencies = [
-    "aiogram>=3.21.0",
-    "aiohttp>=3.9",
-    "alembic>=1.16.2",
-    "asyncpg>=0.30.0",
-    "dishka>=1.6.0",
-    "factory-boy>=3.3.3",
-    "fluent-compiler>=1.0",
-    "fluentogram>=1.1.1",
-    "greenlet>=3.2.3",
-    "litestar>=2.16.0",
+    "aiogram>=3.31.0",
+    "aiohttp>=3.14.4",
+    "alembic>=1.20.1",
+    "asyncpg>=0.32.0",
+    "dishka>=1.10.1",
+    "fluent-compiler>=1.1",
+    "fluentogram>=1.2.1",
+    "greenlet>=3.5.6",
+    "gunicorn>=27.0.0",
+    "litestar>=2.25.0",
     "pydantic>=2.11.7",
-    "pytest-asyncio>=1.1.0",
-    "pytest-cov>=6.0.0",
-    "pytest>=8.4.1",
-    "pytest-xdist>=3.5.0",
-    "python-jose~=3.4.0",
-    "pyyaml>=6.0.2",
-    "pre-commit>=4.0.1",
-    "ruff>=0.12.5",
-    "sqlalchemy>=2.0.41",
-    "ty>=0.0.1a16",
-    "typer>=0.15.0",
-    "uvicorn>=0.35.0",
-    "gunicorn>=23.0.0",
-    "sentry-sdk[litestar]>=2.0.0",
-    "pytest-timeout>=2.4.0",
-    "pytest-sugar>=1.1.1",
-    "pytest-randomly>=3.16.0",
+    "pyjwt>=2.10.1",
+    "pyyaml>=6.0.3",
+    "sentry-sdk[litestar]>=2.75.0",
+    "sqlalchemy>=2.1.8",
+    "typer>=0.29.1",
+    "uvicorn>=0.54.0",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    "mypy>=1.9.0",
+    "factory-boy>=3.3.3",
+    "mypy>=2.4.1",
+    "pre-commit>=4.7.0",
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.5.0",
+    "pytest-cov>=7.1.0",
+    "pytest-randomly>=5.1.0",
+    "pytest-sugar>=1.1.1",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.8.0",
+    "ruff>=0.17.4",
+    "ty>=0.0.101",
 ]
 
 
@@ -143,6 +143,7 @@ lint.ignore = [
     
     # Pylint rules that might be too aggressive
     "PLR0913", # Too many arguments to function call
+    "PLR0917", # Too many positional arguments
     "PLR2004", # Magic value used in comparison
     
     # Documentation rules (can be enabled later)
