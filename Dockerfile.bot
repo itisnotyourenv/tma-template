@@ -10,5 +10,7 @@ RUN uv sync --frozen --no-dev
 COPY . .
 
 ENV PYTHONPATH=/app/src
+# uv run would otherwise re-sync and install the dev group at startup
+ENV UV_NO_SYNC=1
 
 CMD ["uv", "run", "python", "-m", "src.presentation.bot.main"]
